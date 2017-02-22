@@ -12,7 +12,11 @@
   "dependencies": {
     "bcrypt": "^0.8.6",
     "express": "^4.14.1",
+<<<<<<< HEAD
     "mysql": "^2.13.0",
     "request": "^2.79.0"
+=======
+    "mysql": "^2.13.0"
+>>>>>>> origin/master
   }
 }
