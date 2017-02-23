@@ -9,7 +9,7 @@ module.exports = function timedOutAPI(conn) {
       conn.end();
     },
     search: function(query, callback) {
-      conn.query(`SELECT * FROM games WHERE name LIKE %?%`, [query], function(err, result) {
+      conn.query(`SELECT * FROM games WHERE name LIKE ?`, [`%${query}%`], function(err, result) {
         if (err) {
           callback(err);
         } else {
@@ -81,7 +81,14 @@ module.exports = function timedOutAPI(conn) {
               conn.query(`
                 INSERT INTO games(name,GB_id,art,aliases,platform,description)
                 VALUES(?, ?, ?, ?, ?, ?);
-                `, [this.name, this.GBid, this.art, this.aliases, this.platforms, this.description], function(err, response) {
+                `, [
+                this.name,
+                this.GBid,
+                this.art,
+                this.aliases,
+                this.platforms,
+                this.description
+              ], function(err, response) {
                 if (err) {
                   callback(err)
                 } else {
@@ -94,7 +101,7 @@ module.exports = function timedOutAPI(conn) {
             }
           })
           conn.query(`
-          SELECT * FROM games WHERE name LIKE %?%`, [query], function(err, results) {
+          SELECT * FROM games WHERE name LIKE ?`, [`%${query}%`], function(err, results) {
             if (err) {
               callback(err)
             } else {
@@ -103,7 +110,109 @@ module.exports = function timedOutAPI(conn) {
           })
         }
       })
-    }
+    },
+    listGames: function(callback) {
+      conn.query(`
+      SELECT games.id as gameId, games.name as gameName, games.art,
+      games.aliases, games.platform, games.popularity,
+      games.description
+      FROM games
+      GROUP BY gameId
+      ORDER BY popularity
+      LIMIT 4`, function(err, response) {
+        if (err) {
+          callback(err)
+        } else {
+          console.log(response);
+          var test = response.map(function(t) {
+            return {
+              id: t.gameId
+            }
+          })
+          callback(null, response.map(function(res) {
+            return {
+              id: res.gameId,
+              name: res.gameName,
+              art: res.art,
+              aliases: res.aliases,
+              platform: res.platform,
+              description: res.description,
+              popularity: res.popularity
+            }
+          }))
+        }
+      })
+    },
+    listParties: function(gameId, callback) {
+      conn.query(`
+        SELECT parties.id as partyId, startTime,
+        endTime, success, parties.name as partyName,
+        games.name as gameName, games.art,
+        games.aliases, games.platform,
+        games.description, games.popularity,
+        games.id as gameId,
+        users.id as userId, users.username
+        FROM parties
+        LEFT JOIN games
+        ON parties.gameId = games.id
+        LEFT JOIN registrations
+        ON parties.id = registrations.partyId
+        LEFT JOIN users
+        ON registrations.userId = users.id
+        WHERE gameId = ?
+        `, [`${gameId}`],
+      function(err, response) {
+        if(err) {
+          callback(err)
+        }
+        else {
+          var games = response.reduce(function(games, row) {
+            var game = games.find(function(game) {
+              return game.gameId === row.gameId;
+            });
+
+            if(!game) {
+              game = {
+                gameId: row.gameId,
+                gameName: row.gameName,
+                art: row.art,
+                aliases: row.aliases,
+                platform: row.platform,
+                description: row.description,
+                popularity: row.popularity,
+                  parties: []
+              };
+              games.push(game);
+            }
+
+            var partyBook = game.parties.find(function(party) {
+              return party.partyId === row.partyId;
+            });
+
+            if(!partyBook) {
+              partyBook = {
+                partyId: row.partyId,
+                partyName: row.partyName,
+                startTime: row.startTime,
+                endTime: row.endTime,
+                status: row.success,
+                  users: []
+              };
+              game.parties.push(partyBook);
+            }
+
+            partyBook.users.push({
+              userId: row.userId,
+              username: row.username
+            });
+
+            return games;
+          }, []);
+
+        callback(null, games)
+      }
+    })
+  }
   }
 }
 

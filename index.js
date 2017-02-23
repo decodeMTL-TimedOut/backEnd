@@ -3,8 +3,15 @@ var request = require('request');
 var connection = mysql.createConnection({host: 'localhost', user: 'root', password: 'timedOut', database: 'timedOut'});
 var timedOut = require('./timedOut');
 var timedOutAPI = timedOut(connection);
+var express = require('express');
+var app = express();
 
-timedOutAPI.searchGB('lol', function(err, result) {
+// app.get('/main', function(request, response) {
+//   timedOutAPI.listGames()
+// })
+
+
+timedOutAPI.listParties(42, function(err, result) {
   if(err) {
     console.log(err);
   }
@@ -12,6 +19,25 @@ timedOutAPI.searchGB('lol', function(err, result) {
     console.log(JSON.stringify(result));
   }
 })
+
+
+// timedOutAPI.listGames(function(err, result) {
+//   if(err) {
+//     console.log(err);
+//   }
+//   else {
+//     console.log(JSON.stringify(result));
+//   }
+// })
+
+// timedOutAPI.searchGB('mario tennis', function(err, result) {
+//   if(err) {
+//     console.log(err);
+//   }
+//   else {
+//     console.log(JSON.stringify(result));
+//   }
+// })
 
 // var query = `%super high impact%`;
 // timedOutAPI.search(query, function(err, result) {
