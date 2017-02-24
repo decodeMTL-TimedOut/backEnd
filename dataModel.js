@@ -81,7 +81,7 @@
       size: 5,
       startTime: date(),
       endTime: date(),
-      status: `open|confirmed`
+      // status: `open|confirmed`
     }
 
    /games/:id/parties/:partyId/join [post] - join a party
@@ -158,39 +158,40 @@
 [{
   gameId: 12345,
   gameName: `World of Warcraft`,
+  GB_id: 12345,
   art: `http://some.img.com/121234123.jpg`,
   aliases: [`wow`, `legion`],
   platform: `pc`,
   description: `the world's biggest time sink`,
   popularity: 100,
-     parties : [
-       {
-         partyId: 54321,
-         partyName: `ganking noobs in Westfall!`,
-         size: 5,
-         startTime: date(),
-         endTime: date(),
-         status: `open|confirmed`,
-           players: [
-             {
-               userId: 43513,
-               username: pickleBoy123
-             },
-             {
-               player2
-             },
-             {
-               player3
-             }
-         ]
-       },
-       {
-         party2
-       },
-       {
-         party3
-       }
-     ]
+    //  parties : [
+    //    {
+    //      partyId: 54321,
+    //      partyName: `ganking noobs in Westfall!`,
+    //      size: 5,
+    //      startTime: date(),
+    //      endTime: date(),
+    //      status: `open|confirmed`,
+    //        players: [
+    //          {
+    //            userId: 43513,
+    //            username: pickleBoy123
+    //          },
+    //          {
+    //            player2
+    //          },
+    //          {
+    //            player3
+    //          }
+    //      ]
+    //    },
+    //    {
+    //      party2
+    //    },
+    //    {
+    //      party3
+    //    }
+    //  ]
   },
   {
     game2

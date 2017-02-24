@@ -125,10 +125,10 @@ module.exports = function timedOutAPI(conn) {
             return {
               gameId: res.gameId,
               gameName: res.gameName,
-              art: res.art,
+              // art: res.art,
               aliases: res.aliases,
               platform: res.platform,
-              description: res.description,
+              // description: res.description,
               popularity: res.popularity
             }
           }))
@@ -136,15 +136,13 @@ module.exports = function timedOutAPI(conn) {
       })
     },
     listParties: function(gameId, callback) {
-      conn.query(`
-        SELECT parties.id as partyId, startTime,
-        endTime, success, parties.name as partyName,
+      conn.query(`  SELECT parties.id as partyId, startTime,
+        endTime, confirm, parties.name as partyName,
         games.name as gameName, games.art,
         games.aliases, games.platform,
         games.description, games.popularity,
-        games.id as gameId, count(parties.id) as partyCount,
-        users.id as userId, users.username,
-        parties.size
+        games.id as gameId, users.id as userId,
+        users.username, parties.size
         FROM games
         LEFT JOIN parties
         ON parties.gameId = games.id
@@ -171,7 +169,6 @@ module.exports = function timedOutAPI(conn) {
                 platform: row.platform,
                 description: row.description,
                 popularity: row.popularity,
-                partyCount: row.partyCount,
                 parties: []
               };
               games.push(game);
@@ -188,7 +185,7 @@ module.exports = function timedOutAPI(conn) {
                 size: row.size,
                 startTime: row.startTime,
                 endTime: row.endTime,
-                status: row.success,
+                status: row.confirm,
                 users: []
               };
               game.parties.push(partyBook);
@@ -199,7 +196,7 @@ module.exports = function timedOutAPI(conn) {
             return games;
           }, []);
 
-          callback(null, games)
+          callback(null, games[0]);
         }
       })
     },
@@ -234,7 +231,44 @@ module.exports = function timedOutAPI(conn) {
                   if (err) {
                     callback(err);
                   } else {
-                    callback(null, res);
+                      conn.query(`
+                        SELECT parties.id as partyId,
+                        registrations.id as regId,
+                        registrations.joined,
+                        registrations.left as whenLeft,
+                        users.username, users.email
+                        FROM parties
+                        LEFT JOIN registrations
+                        ON parties.id = registrations.partyId
+                        LEFT JOIN users
+                        ON registrations.userId = users.id
+                        WHERE registrations.userId = ?
+                        `, [userId],
+                      function(err, re) {
+                        if(err) {
+                          callback(err);
+                        }
+                        else {
+
+                          callback(null, {
+                            partyId: re[0].partyId,
+                            partyName: name,
+                            size: size,
+                            startTime: startTime,
+                            endTime: endTime,
+                            status: `open`,
+                            registration:
+                            {
+                              regId: re[0].regId,
+                              userId: userId,
+                              joined: re[0].joined,
+                              left: re[0].whenLeft,
+                              username: re[0].username,
+                              email: re[0].email
+                            }
+                          })
+                        }
+                      })
                   }
                 })
               }
@@ -260,7 +294,13 @@ module.exports = function timedOutAPI(conn) {
         if (err) {
           callback(err)
         } else {
-          callback(null, result)
+          callback(null, {
+            partyId: partyId,
+            partyName: name,
+            size: size,
+            startTime: startTime,
+            endTime: endTime
+          })
         }
       })
     },
@@ -287,7 +327,28 @@ module.exports = function timedOutAPI(conn) {
               if (err) {
                 callback('You are already in a party!')
               } else {
-                callback(null, result);
+                conn.query(`
+                  SELECT registrations.id as regId,
+                  registrations.userId, registrations.joined,
+                  registrations.left as whenLeft,
+                  users.username, users.email
+                  FROM registrations
+                  LEFT JOIN users
+                  ON registrations.userId = users.id
+                  WHERE partyId=?
+                  `, [partyId],
+                function(err, result) {
+                  if(err) {
+                    callback(err);
+                  }
+                  else {
+                    callback(null, {
+                      partyId: partyId,
+                      registrations: result
+                    })
+                  }
+                }
+                )
               }
             })
           }
@@ -297,6 +358,10 @@ module.exports = function timedOutAPI(conn) {
     leaveParty: function(leave, callback) {
       var userId = leave.userId;
       var partyId = leave.partyId;
+      var party = {
+        partyId: partyId,
+        userId: userId
+      }
       conn.query(`
           DELETE FROM registrations
           WHERE userId=? AND partyId=?;
@@ -306,12 +371,15 @@ module.exports = function timedOutAPI(conn) {
         if (err) {
           callback(err);
         } else {
-          callback(null, result);
+          callback(null, party);
         }
       })
     },
     deleteParty: function(del, callback) {
       var partyId = del.partyId;
+      var party = {
+        partyId: partyId
+      };
       conn.query(`
         DELETE FROM registrations
         WHERE partyId = ?`, [partyId], function(err, result) {
@@ -324,7 +392,7 @@ module.exports = function timedOutAPI(conn) {
             if (err) {
               callback(err);
             } else {
-              callback(null, result);
+              callback(null, party);
             }
           })
         }
@@ -332,6 +400,9 @@ module.exports = function timedOutAPI(conn) {
     },
     confirmParty: function(confirm, callback) {
       var partyId = confirm.partyId;
+      var party = {
+        partyId: partyId
+      };
       conn.query(`
         SELECT confirm
         FROM parties
@@ -349,7 +420,7 @@ module.exports = function timedOutAPI(conn) {
               if (err) {
                 callback(err);
               } else {
-                callback(null, result);
+                callback(null, party);
               }
             })
           } else {
@@ -360,7 +431,7 @@ module.exports = function timedOutAPI(conn) {
               if (err) {
                 callback(err);
               } else {
-                callback(null, result);
+                callback(null, party);
               }
             })
           }
@@ -373,33 +444,30 @@ module.exports = function timedOutAPI(conn) {
       var startTime = search.startTime;
       var gameId = search.gameId;
       conn.query(`
-        SELECT parties.id as partyId, parties.startTime, parties.endTime,
-        parties.name as partyName, parties.gameId, parties.size, parties.confirm,
-        count(registrations.partyId) as members,
-        games.name as gameName, games.art, games.aliases,
-        games.platform, games.description, games.popularity,
-        registrations.id as regId, registrations.userId as userId,
-        registrations.joined as joined,
-        registrations.left as whenLeft,
-        users.email as email,
-        users.username as username
+        SELECT parties.name as partyName, parties.id as partyId,
+        parties.size, parties.startTime, parties.endTime,
+        parties.confirm, parties.gameId as gameId,
+        games.name as gameName, games.aliases, games.platform,
+        games.description, games.popularity, games.art,
+        registrations.id as regId, registrations.userId,
+        registrations.joined, registrations.left as whenLeft,
+        users.username, users.email
         FROM parties
-        LEFT JOIN registrations
-        ON parties.id = registrations.partyId
         LEFT JOIN games
         ON parties.gameId = games.id
+        LEFT JOIN registrations
+        ON parties.id = registrations.partyId
         LEFT JOIN users
         ON users.id = registrations.userId
-        WHERE parties.size = ? AND parties.gameId = ?
-        AND parties.startTime > ? AND parties.name LIKE ?
-        ORDER BY parties.startTime ASC, members desc
-        `, [size, gameId, startTime, `%${query}%`],
+        WHERE parties.size = ? AND parties.startTime > ?
+        AND parties.gameId = ? AND parties.name LIKE ?
+        ORDER BY parties.startTime ASC
+        `, [size, startTime, gameId, `%${query}%`],
       function(err, response) {
         if(err) {
           callback(err);
         }
         else {
-          console.log(response)
           var parties = response.reduce(function(parties, row) {
             var party = parties.find(function(party) {
               return party.partyId === row.partyId;
@@ -412,43 +480,39 @@ module.exports = function timedOutAPI(conn) {
                 size: row.size,
                 startTime: row.startTime,
                 endTime: row.endTime,
-                status: `open|confirmed`,
-                game: []
+                status: row.confirm,
+                game: {
+                  gameId: row.gameId,
+                  gameName: row.gameName,
+                  art: row.art,
+                  aliases: row.aliases,
+                  platform: row.platform,
+                  description: row.description,
+                  popularity: row.popularity
+                },
+                registrations: []
               };
               parties.push(party);
             }
 
-            var game = party.games.find(function(game) {
-              return game.gameId === row.gameId;
+            var registration = parties.find(function(registration) {
+              return registration.regId === row.regId;
             });
 
-            if (!game) {
-              game = {
-                gameId: row.gameId,
-                gameName: row.gameName,
-                art: row.art,
-                aliases: row.aliases,
-                platform: row.platform,
-                popularity: row.popularity,
-                desription: row.description,
-                registrations: []
+            if (!registration) {
+              registration = {
+                regId: row.regId,
+                userId: row.userId,
+                joined: row.joined,
+                left: row.whenLeft,
+                username: row.username,
+                email: row.email,
               };
-              party.games.push(game);
+              party.registrations.push(registration);
             }
-
-            game.registrations.push({
-              regId: row.regId,
-              userId: row.userId,
-              joined: row.joined,
-              left: row.whenLeft,
-              username: row.username,
-              email: row.email
-              });
-
-            return games;
+            return parties;
           }, []);
-
-          callback(null, games)
+          callback(null, parties);
         }
       }
     )}

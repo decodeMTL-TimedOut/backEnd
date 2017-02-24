@@ -4,7 +4,7 @@ var connection = mysql.createConnection({host: 'localhost', user: 'root', passwo
 var timedOut = require('./timedOut');
 var timedOutAPI = timedOut(connection);
 var express = require('express');
-var app = express();
+// var app = express();
 
 // search our DB
 // var query = ''
@@ -18,7 +18,7 @@ var app = express();
 // })
 
 //search GB
-// var query = ''
+// var query = 'justice league'
 // timedOutAPI.searchGB(query, function(err, result) {
 //   if(err) {
 //     console.log(err)
@@ -62,7 +62,7 @@ var app = express();
 // })
 
 // //list parties
-// var gameId = '58'
+// var gameId = '42'
 // timedOutAPI.listParties(gameId, function(err, result) {
 //   if(err) {
 //     console.log(err);
@@ -73,18 +73,17 @@ var app = express();
 // })
 
 // create party
-var date = Date.now();
-date = new Date();
-date = date.getUTCFullYear() + '-' + ('00' + (date.getUTCMonth() + 1)).slice(-2) + '-' + ('00' + date.getUTCDate()).slice(-2) + ' ' + ('00' + date.getUTCHours()).slice(-2) + ':' + ('00' + date.getUTCMinutes()).slice(-2) + ':' + ('00' + date.getUTCSeconds()).slice(-2);
-//
+// var date = Date.now();
+// date = new Date();
+// date = date.getUTCFullYear() + '-' + ('00' + (date.getUTCMonth() + 1)).slice(-2) + '-' + ('00' + date.getUTCDate()).slice(-2) + ' ' + ('00' + date.getUTCHours()).slice(-2) + ':' + ('00' + date.getUTCMinutes()).slice(-2) + ':' + ('00' + date.getUTCSeconds()).slice(-2);
+
 // timedOutAPI.createParty({
-//   startTime: '2017-02-25 00:00:00',
-//   endTime: '2017-02-26 00:00:00',
-//   name: 'boo im a ghost',
+//   startTime: '2017-02-27 00:00:00',
+//   endTime: '2017-02-28 00:00:00',
+//   name: 'I was saying boo urns',
 //   gameId: 42,
 //   size: 4,
-//   userId: 1,
-//   username: 'user1'
+//   userId: 3
 // }, function(err, result) {
 //   if(err) {
 //     console.log(err)
@@ -96,12 +95,12 @@ date = date.getUTCFullYear() + '-' + ('00' + (date.getUTCMonth() + 1)).slice(-2)
 
 //edit party
 // timedOutAPI.editParty({
-//   startTime: date,
-//   endTime: undefined,
-//   name: 'the second greatest party ever made',
-//   gameId: 58,
-//   size: 10,
-//   partyId: 18,
+//   startTime: '2017-02-28 00:00:00',
+//   endTime: '2017-03-01 00:00:00',
+//   name: 'boo this party is changed',
+//   gameId: 42,
+//   size: 4,
+//   partyId: 21,
 // }, function(err, result) {
 //     if(err) {
 //       console.log(err);
@@ -114,8 +113,8 @@ date = date.getUTCFullYear() + '-' + ('00' + (date.getUTCMonth() + 1)).slice(-2)
 
 //join party
 // timedOutAPI.joinParty({
-//   userId: 4,
-//   partyId: 5
+//   partyId: 21,
+//   userId: 2
 // }, function(err, result) {
 //   if (err) {
 //     console.log(err)
@@ -126,8 +125,8 @@ date = date.getUTCFullYear() + '-' + ('00' + (date.getUTCMonth() + 1)).slice(-2)
 
 //leave/kick
 // timedOutAPI.leaveParty({
-//   partyId: 5,
-//   userId: 4
+//   partyId: 25,
+//   userId: 3
 // }, function(err, result) {
 //   if(err) {
 //     console.log(err);
@@ -139,7 +138,7 @@ date = date.getUTCFullYear() + '-' + ('00' + (date.getUTCMonth() + 1)).slice(-2)
 
 //delete party
 // timedOutAPI.deleteParty({
-//   partyId: 5
+//   partyId: 19
 // }, function(err, result) {
 //   if(err) {
 //     console.log(err);
@@ -151,7 +150,7 @@ date = date.getUTCFullYear() + '-' + ('00' + (date.getUTCMonth() + 1)).slice(-2)
 
 //confirm partyId
 // timedOutAPI.confirmParty({
-//   partyId: 6
+//   partyId: 21
 // }, function(err, result) {
 //   if(err) {
 //     console.log(err);
@@ -162,17 +161,16 @@ date = date.getUTCFullYear() + '-' + ('00' + (date.getUTCMonth() + 1)).slice(-2)
 // })
 
 //search party
-timedOutAPI.searchParty({
-  query: 'boo',
-  size: 4,
-  startTime: date,
-  gameId: 42,
-  members: 4
-}, function(err, result) {
-  if(err) {
-    console.log(err);
-  }
-  else {
-    console.log(JSON.stringify(result));
-  }
-})
+// timedOutAPI.searchParty({
+//   query: 'boo',
+//   size: 4,
+//   startTime: '2017-02-23 00:00:00',
+//   gameId: 42,
+// }, function(err, result) {
+//   if(err) {
+//     console.log(err);
+//   }
+//   else {
+//     console.log(JSON.stringify(result));
+//   }
+// })
