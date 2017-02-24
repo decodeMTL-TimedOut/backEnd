@@ -3,7 +3,9 @@ var request = require('request');
 module.exports = function timedOutAPI(conn) {
   return {
     searchGames: function(query, callback) {
-      conn.query(`SELECT * FROM games WHERE name LIKE ? OR description LIKE ?`, [`%${query}%`, `%${query}%`], function(err, result) {
+      conn.query(`SELECT * FROM games WHERE name LIKE ? OR description LIKE ?`, [
+        `%${query}%`, `%${query}%`
+      ], function(err, result) {
         if (err) {
           callback(err);
         } else {
@@ -24,7 +26,7 @@ module.exports = function timedOutAPI(conn) {
       };
       request(options, function(err, response) {
         if (err) {
-          console.log(err);
+          callback(err);
         } else {
           data = JSON.parse(response.body);
           var dataObj = data.results.map(function(res) {
@@ -94,7 +96,9 @@ module.exports = function timedOutAPI(conn) {
             }
           })
           conn.query(`
-          SELECT * FROM games WHERE name LIKE ? OR description LIKE ?`, [`%${query}%`, `%${query}%`], function(err, results) {
+          SELECT * FROM games WHERE name LIKE ? OR description LIKE ?`, [
+            `%${query}%`, `%${query}%`
+          ], function(err, results) {
             if (err) {
               callback(err)
             } else {
@@ -113,12 +117,10 @@ module.exports = function timedOutAPI(conn) {
         FROM games
         GROUP BY gameId
         ORDER BY popularity DESC
-        `,
-      function(err, result) {
-        if(err) {
+        `, function(err, result) {
+        if (err) {
           callback(err)
-        }
-        else {
+        } else {
           callback(null, result.map(function(res) {
             return {
               gameId: res.gameId,
@@ -127,12 +129,12 @@ module.exports = function timedOutAPI(conn) {
               aliases: res.aliases,
               platform: res.platform,
               description: res.description,
-              popularity: res.popularity,
+              popularity: res.popularity
             }
           }))
-      }
-    })
-  },
+        }
+      })
+    },
     listParties: function(gameId, callback) {
       conn.query(`
         SELECT parties.id as partyId, startTime,
@@ -151,18 +153,16 @@ module.exports = function timedOutAPI(conn) {
         LEFT JOIN users
         ON registrations.userId = users.id
         WHERE gameId = ?
-        `, [`${gameId}`],
-      function(err, response) {
-        if(err) {
+        `, [`${gameId}`], function(err, response) {
+        if (err) {
           callback(err)
-        }
-        else {
+        } else {
           var games = response.reduce(function(games, row) {
             var game = games.find(function(game) {
               return game.gameId === row.gameId;
             });
 
-            if(!game) {
+            if (!game) {
               game = {
                 gameId: row.gameId,
                 gameName: row.gameName,
@@ -172,7 +172,7 @@ module.exports = function timedOutAPI(conn) {
                 description: row.description,
                 popularity: row.popularity,
                 partyCount: row.partyCount,
-                  parties: []
+                parties: []
               };
               games.push(game);
             }
@@ -181,7 +181,7 @@ module.exports = function timedOutAPI(conn) {
               return party.partyId === row.partyId;
             });
 
-            if(!partyBook) {
+            if (!partyBook) {
               partyBook = {
                 partyId: row.partyId,
                 partyName: row.partyName,
@@ -189,126 +189,268 @@ module.exports = function timedOutAPI(conn) {
                 startTime: row.startTime,
                 endTime: row.endTime,
                 status: row.success,
-                  users: []
+                users: []
               };
               game.parties.push(partyBook);
             }
 
-            partyBook.users.push({
-              userId: row.userId,
-              username: row.username
-            });
+            partyBook.users.push({userId: row.userId, username: row.username});
 
             return games;
           }, []);
 
-        callback(null, games)
-      }
-    })
-  },
-  createParty: function(options, callback) {
-    var startTime = options.startTime;
-    var endTime = options.endTime;
-    var name = options.name;
-    var size = options.size;
-    var gameId = options.gameId;
-    var userId = options.userId;
-    console.log(userId);
-    conn.query(`
+          callback(null, games)
+        }
+      })
+    },
+    createParty: function(create, callback) {
+      var startTime = create.startTime;
+      var endTime = create.endTime;
+      var name = create.name;
+      var size = create.size;
+      var gameId = create.gameId;
+      var userId = create.userId;
+      conn.query(`
         SELECT registrations.id
         FROM registrations
-        WHERE userId = ?`, [userId],
-        function(err, result) {
-          if(err) {
-            callback(err)
-          }
-          else {
-            if(result.length > 0) {
-              console.log('You are already in a party!')
-            }
-            else {
-              conn.query(`
+        WHERE userId = ?`, [userId], function(err, result) {
+        if (err) {
+          callback(err)
+        } else {
+          if (result.length > 0) {
+            callback('You are already in a party!')
+          } else {
+            conn.query(`
               INSERT INTO parties(startTime, endTime, name, gameId, size)
-              VALUES(?,?,?,?,?)`, [startTime, endTime, name, gameId, size],
-              function(err, result) {
-                if(err) {
-                  callback(err);
-                }
-                else {
-                  conn.query(`
+              VALUES(?,?,?,?,?)`, [
+              startTime, endTime, name, gameId, size
+            ], function(err, result) {
+              if (err) {
+                callback(err);
+              } else {
+                conn.query(`
                     INSERT INTO registrations(partyId, joined, userId)
-                    VALUES((LAST_INSERT_ID()), NOW(), ?)`, [userId],
-                    function(err, res) {
-                      if(err) {
-                        callback(err);
-                      }
-                      else {
-                        callback(null, res);
-                      }
-                    }
-                  )
-                }
-              })
-            }
+                    VALUES((LAST_INSERT_ID()), NOW(), ?)`, [userId], function(err, res) {
+                  if (err) {
+                    callback(err);
+                  } else {
+                    callback(null, res);
+                  }
+                })
+              }
+            })
           }
         }
-      )
-  },
-  editParty: function(options, callback) {
-    var startTime = options.startTime;
-    var endTime = options.endTime;
-    var name = options.name;
-    var size = options.size;
-    var partyId = options.partyId;
-    var userId = options.userId;
-    conn.query(`
+      })
+    },
+    editParty: function(edit, callback) {
+      var startTime = edit.startTime;
+      var endTime = edit.endTime;
+      var name = edit.name;
+      var size = edit.size;
+      var partyId = edit.partyId;
+      var userId = edit.userId;
+      conn.query(`
       UPDATE parties
       SET startTime=?, endTime=?, name=?, size=?
       WHERE parties.id=?
-      `, [startTime, endTime, name, size, partyId],
-    function(err, result) {
-      if(err) {
-        callback(err)
-      }
-      else {
-        callback(null, result)
-      }
-    })
-  },
-  joinParty: function(options, callback) {
-    var userId = options.userId;
-    var partyId = options.partyId;
-    conn.query(`
+      `, [
+        startTime, endTime, name, size, partyId
+      ], function(err, result) {
+        if (err) {
+          callback(err)
+        } else {
+          callback(null, result)
+        }
+      })
+    },
+    joinParty: function(join, callback) {
+      var userId = join.userId;
+      var partyId = join.partyId;
+      conn.query(`
       SELECT COUNT(*) as count, parties.size
       FROM registrations
       LEFT JOIN parties
       ON partyId = parties.id
-      WHERE partyId=?`, [partyId],
-    function(err, res) {
-      if(err) {
-        callback(err);
-      }
-      else {
-        if(res[0].count >= res[0].size) {
-          console.log("Party is full!")
-        }
-        else {
-          conn.query(`
+      WHERE partyId=?`, [partyId], function(err, res) {
+        if (err) {
+          callback(err);
+        } else {
+          if (res[0].count >= res[0].size) {
+            callback("Party is full!")
+          } else {
+            conn.query(`
             INSERT INTO registrations(partyId, userId, joined)
-            VALUES(?,?,NOW())`, [partyId, userId],
-            function(err, result) {
-              if(err) {
-                console.log('You are already in a party!')
-              }
-              else {
+            VALUES(?,?,NOW())`, [
+              partyId, userId
+            ], function(err, result) {
+              if (err) {
+                callback('You are already in a party!')
+              } else {
                 callback(null, result);
               }
+            })
+          }
+        }
+      })
+    },
+    leaveParty: function(leave, callback) {
+      var userId = leave.userId;
+      var partyId = leave.partyId;
+      conn.query(`
+          DELETE FROM registrations
+          WHERE userId=? AND partyId=?;
+        `, [
+        userId, partyId
+      ], function(err, result) {
+        if (err) {
+          callback(err);
+        } else {
+          callback(null, result);
+        }
+      })
+    },
+    deleteParty: function(del, callback) {
+      var partyId = del.partyId;
+      conn.query(`
+        DELETE FROM registrations
+        WHERE partyId = ?`, [partyId], function(err, result) {
+        if (err) {
+          callback(err);
+        } else {
+          conn.query(`
+            DELETE FROM parties
+            WHERE id = ?`, [partyId], function(err, result) {
+            if (err) {
+              callback(err);
+            } else {
+              callback(null, result);
             }
-          )
+          })
+        }
+      })
+    },
+    confirmParty: function(confirm, callback) {
+      var partyId = confirm.partyId;
+      conn.query(`
+        SELECT confirm
+        FROM parties
+        WHERE id = ?
+        `, [partyId], function(err, res) {
+        if (err) {
+          callback(err);
+        } else {
+          if (res[0].confirm === 0) {
+            conn.query(`
+              UPDATE parties
+              SET confirm = 1
+              WHERE id = ?
+              `, [partyId], function(err, result) {
+              if (err) {
+                callback(err);
+              } else {
+                callback(null, result);
+              }
+            })
+          } else {
+            conn.query(`
+                    UPDATE parties
+                    SET confirm = 0
+                    WHERE id = ?`, [partyId], function(err, result) {
+              if (err) {
+                callback(err);
+              } else {
+                callback(null, result);
+              }
+            })
+          }
         }
       }
-    })
-  },
+    )},
+    searchParty: function(search, callback) {
+      var query = search.query;
+      var size = search.size;
+      var startTime = search.startTime;
+      var gameId = search.gameId;
+      conn.query(`
+        SELECT parties.id as partyId, parties.startTime, parties.endTime,
+        parties.name as partyName, parties.gameId, parties.size, parties.confirm,
+        count(registrations.partyId) as members,
+        games.name as gameName, games.art, games.aliases,
+        games.platform, games.description, games.popularity,
+        registrations.id as regId, registrations.userId as userId,
+        registrations.joined as joined,
+        registrations.left as whenLeft,
+        users.email as email,
+        users.username as username
+        FROM parties
+        LEFT JOIN registrations
+        ON parties.id = registrations.partyId
+        LEFT JOIN games
+        ON parties.gameId = games.id
+        LEFT JOIN users
+        ON users.id = registrations.userId
+        WHERE parties.size = ? AND parties.gameId = ?
+        AND parties.startTime > ? AND parties.name LIKE ?
+        ORDER BY parties.startTime ASC, members desc
+        `, [size, gameId, startTime, `%${query}%`],
+      function(err, response) {
+        if(err) {
+          callback(err);
+        }
+        else {
+          console.log(response)
+          var parties = response.reduce(function(parties, row) {
+            var party = parties.find(function(party) {
+              return party.partyId === row.partyId;
+            });
 
+            if (!party) {
+              party = {
+                partyId: row.partyId,
+                partyName: row.partyName,
+                size: row.size,
+                startTime: row.startTime,
+                endTime: row.endTime,
+                status: `open|confirmed`,
+                game: []
+              };
+              parties.push(party);
+            }
+
+            var game = party.games.find(function(game) {
+              return game.gameId === row.gameId;
+            });
+
+            if (!game) {
+              game = {
+                gameId: row.gameId,
+                gameName: row.gameName,
+                art: row.art,
+                aliases: row.aliases,
+                platform: row.platform,
+                popularity: row.popularity,
+                desription: row.description,
+                registrations: []
+              };
+              party.games.push(game);
+            }
+
+            game.registrations.push({
+              regId: row.regId,
+              userId: row.userId,
+              joined: row.joined,
+              left: row.whenLeft,
+              username: row.username,
+              email: row.email
+              });
+
+            return games;
+          }, []);
+
+          callback(null, games)
+        }
+      }
+    )}
   }
 }

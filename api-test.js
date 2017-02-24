@@ -6,7 +6,6 @@ var timedOutAPI = timedOut(connection);
 var express = require('express');
 var app = express();
 
-
 // search our DB
 // var query = ''
 // timedOutAPI.searchGames(query, function(err, result) {
@@ -76,19 +75,14 @@ var app = express();
 // create party
 var date = Date.now();
 date = new Date();
-date = date.getUTCFullYear() + '-' +
-    ('00' + (date.getUTCMonth()+1)).slice(-2) + '-' +
-    ('00' + date.getUTCDate()).slice(-2) + ' ' +
-    ('00' + date.getUTCHours()).slice(-2) + ':' +
-    ('00' + date.getUTCMinutes()).slice(-2) + ':' +
-    ('00' + date.getUTCSeconds()).slice(-2);
-
+date = date.getUTCFullYear() + '-' + ('00' + (date.getUTCMonth() + 1)).slice(-2) + '-' + ('00' + date.getUTCDate()).slice(-2) + ' ' + ('00' + date.getUTCHours()).slice(-2) + ':' + ('00' + date.getUTCMinutes()).slice(-2) + ':' + ('00' + date.getUTCSeconds()).slice(-2);
+//
 // timedOutAPI.createParty({
-//   startTime: date,
-//   endTime: undefined,
-//   name: 'the greatest party ever made',
-//   gameId: 58,
-//   size: 10,
+//   startTime: '2017-02-25 00:00:00',
+//   endTime: '2017-02-26 00:00:00',
+//   name: 'boo im a ghost',
+//   gameId: 42,
+//   size: 4,
 //   userId: 1,
 //   username: 'user1'
 // }, function(err, result) {
@@ -119,12 +113,64 @@ date = date.getUTCFullYear() + '-' +
 // )
 
 //join party
-timedOutAPI.joinParty({
-  userId: 4,
-  partyId: 5
+// timedOutAPI.joinParty({
+//   userId: 4,
+//   partyId: 5
+// }, function(err, result) {
+//   if (err) {
+//     console.log(err)
+//   } else {
+//     console.log(JSON.stringify(result));
+//   }
+// })
+
+//leave/kick
+// timedOutAPI.leaveParty({
+//   partyId: 5,
+//   userId: 4
+// }, function(err, result) {
+//   if(err) {
+//     console.log(err);
+//   }
+//   else {
+//     console.log(JSON.stringify(result));
+//   }
+// })
+
+//delete party
+// timedOutAPI.deleteParty({
+//   partyId: 5
+// }, function(err, result) {
+//   if(err) {
+//     console.log(err);
+//   }
+//   else {
+//     console.log(JSON.stringify(result));
+//   }
+// })
+
+//confirm partyId
+// timedOutAPI.confirmParty({
+//   partyId: 6
+// }, function(err, result) {
+//   if(err) {
+//     console.log(err);
+//   }
+//   else {
+//     console.log(JSON.stringify(result));
+//   }
+// })
+
+//search party
+timedOutAPI.searchParty({
+  query: 'boo',
+  size: 4,
+  startTime: date,
+  gameId: 42,
+  members: 4
 }, function(err, result) {
   if(err) {
-    console.log(err)
+    console.log(err);
   }
   else {
     console.log(JSON.stringify(result));

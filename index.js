@@ -8,10 +8,9 @@ var app = express();
 
 app.get('/main', function(request, response) {
   timedOutAPI.listGames(function(err, result) {
-    if(err) {
+    if (err) {
       console.log(err);
-    }
-    else {
+    } else {
       console.log(JSON.stringify(result));
     }
   })
@@ -19,10 +18,9 @@ app.get('/main', function(request, response) {
 
 app.get('/games/:id', function(request, response) {
   timedOutAPI.listParties(request.params.id, function(err, result) {
-    if(err) {
+    if (err) {
       console.log(err)
-    }
-    else {
+    } else {
       console.log(JSON.stringify(result));
     }
   })
@@ -35,13 +33,11 @@ app.post('/games/:id/parties/create', function(request, response) {
     name: response.body.name,
     gameId: request.params.id,
     size: response.body.size,
-    userId: loggedinuser,
-
+    userId: loggedinuser
   }, function(err, result) {
-    if(err) {
+    if (err) {
       console.log(err);
-    }
-    else{
+    } else {
       console.log(JSON.stringify(result));
     }
   })
@@ -56,26 +52,84 @@ app.post('/games/:id/parties/:partyId/edit', function(request, response) {
     size: response.body.size,
     partyId: request.params.partyId
   }, function(err, result) {
-    if(err) {
+    if (err) {
       console.log(err);
-    }
-    else {
+    } else {
       console.log(JSON.stringify(result));
     }
   }
-  })
+})
 })
 
 app.post('/games/:id/parties/:partyId/join', function(request, response) {
   timedOutAPI.joinParty({
     partyId: request.params.partyId,
     userId: loggedinuser
-  }), function(err, result) {
+  }, function(err, result) {
+  if (err) {
+    console.log(err);
+  } else {
+    console.log(JSON.stringify(result));
+  }
+})
+})
+
+app.post('/games/:id/parties/:partyId/leave', function(request, response) {
+  timedOutAPI.leaveParty({
+    partyId: request.params.id,
+    userId: loggedinuser||otheruser
+  }, function(err, result) {
     if(err) {
       console.log(err);
     }
     else {
       console.log(JSON.stringify(result));
     }
-  }
+  })
+})
+
+app.post('/games/:id/parties/:partyId/delete', function(request, response) {
+  timedOutAPI.deleteParty({
+    partyId: request.params.partyId
+  }, function(err, result) {
+    if(err) {
+      console.log(err);
+    }
+    else {
+      console.log(JSON.stringify(result));
+    }
+  })
+})
+
+app.post('/games/:id/parties/:partyId/confirm', function(request, response) {
+  timedOutAPI.confirmParty({
+    partyId: request.params.partyId
+  }, function(err, result) {
+    if(err) {
+      console.log(err);
+    }
+    else {
+      console.log(JSON.stringify(result));
+    }
+  })
+})
+// query search with => /?search=
+app.post('/games/:id/search/:size/:startTime', function(request, response) {
+  var search = request.query.search;
+  var gameId = request.params.id;
+  var size = request.params.size;
+  var startTime = request.params.startTime;
+  timedOutAPI.searchParty({
+    query: search,
+    gameId: gameId,
+    size: size,
+    startTime: startTime
+  }, function(err, result) {
+    if(err) {
+      console.log(err);
+    }
+    else {
+      console.log(JSON.stringify(result));
+    }
+  })
 })

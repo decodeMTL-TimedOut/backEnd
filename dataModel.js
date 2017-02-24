@@ -107,11 +107,8 @@
    /games/:id/parties/:partyId/leave [post] - leave party or kick player
     {
       partyId: 123,
-          registrations:
-            {
-              regId: 123
-            }
-}
+      userId: 123
+    }
 
    /games/:id/parties/:partyId/delete [post] - delete party
     {
