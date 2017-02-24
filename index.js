@@ -6,69 +6,76 @@ var timedOutAPI = timedOut(connection);
 var express = require('express');
 var app = express();
 
-// app.get('/main', function(request, response) {
-//   timedOutAPI.listGames()
-// })
-
-
-timedOutAPI.listParties(42, function(err, result) {
-  if(err) {
-    console.log(err);
-  }
-  else {
-    console.log(JSON.stringify(result));
-  }
+app.get('/main', function(request, response) {
+  timedOutAPI.listGames(function(err, result) {
+    if(err) {
+      console.log(err);
+    }
+    else {
+      console.log(JSON.stringify(result));
+    }
+  })
 })
 
+app.get('/games/:id', function(request, response) {
+  timedOutAPI.listParties(request.params.id, function(err, result) {
+    if(err) {
+      console.log(err)
+    }
+    else {
+      console.log(JSON.stringify(result));
+    }
+  })
+})
 
-// timedOutAPI.listGames(function(err, result) {
-//   if(err) {
-//     console.log(err);
-//   }
-//   else {
-//     console.log(JSON.stringify(result));
-//   }
-// })
+app.post('/games/:id/parties/create', function(request, response) {
+  timedOutAPI.createParty({
+    startTime: response.body.starTime,
+    endTime: response.body.endTime,
+    name: response.body.name,
+    gameId: request.params.id,
+    size: response.body.size,
+    userId: loggedinuser,
 
-// timedOutAPI.searchGB('mario tennis', function(err, result) {
-//   if(err) {
-//     console.log(err);
-//   }
-//   else {
-//     console.log(JSON.stringify(result));
-//   }
-// })
+  }, function(err, result) {
+    if(err) {
+      console.log(err);
+    }
+    else{
+      console.log(JSON.stringify(result));
+    }
+  })
+})
 
-// var query = `%super high impact%`;
-// timedOutAPI.search(query, function(err, result) {
-//   if(err) {
-//     console.log(err)
-//   }
-//   else {
-//     console.log(result.length < 3);
-//     var searchResult = (JSON.stringify(result));
-//     // console.log(searchResult)
-//     // if(searchResult.COUNT(*) < 3) {
-//     //   console.log('search GB');
-//     // }
-//     // else{
-//     //   console.log('return our result')
-//     // }
-//   }
-// })
+app.post('/games/:id/parties/:partyId/edit', function(request, response) {
+  timedOutAPI.editParty({
+    startTime: response.body.starTime,
+    endTime: response.body.endTime,
+    name: response.body.name,
+    gameId: request.params.id,
+    size: response.body.size,
+    partyId: request.params.partyId
+  }, function(err, result) {
+    if(err) {
+      console.log(err);
+    }
+    else {
+      console.log(JSON.stringify(result));
+    }
+  }
+  })
+})
 
-
-
-// timedOutAPI.test({
-//   id: '557',
-//   username: 'megamon',
-//   password: '20xx',
-//   email: 'mega@mon.com'
-// }, function(err, user) {
-//   if (err) {
-//     console.log(err);
-//   } else {
-//     console.log(user);
-//     connection.end();
-//   }
-// })
+app.post('/games/:id/parties/:partyId/join', function(request, response) {
+  timedOutAPI.joinParty({
+    partyId: request.params.partyId,
+    userId: loggedinuser
+  }), function(err, result) {
+    if(err) {
+      console.log(err);
+    }
+    else {
+      console.log(JSON.stringify(result));
+    }
+  }
+})

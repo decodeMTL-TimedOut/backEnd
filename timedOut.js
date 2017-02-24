@@ -2,14 +2,8 @@ var request = require('request');
 
 module.exports = function timedOutAPI(conn) {
   return {
-    test: function(data, callback) {
-      conn.query(`INSERT INTO users
-          (id, username, email, password, createdAt, updatedAt)
-          VALUES (?,?,?,?, NOW(), NOW())`, [data.id, data.username, data.email, data.password])
-      conn.end();
-    },
-    search: function(query, callback) {
-      conn.query(`SELECT * FROM games WHERE name LIKE ?`, [`%${query}%`], function(err, result) {
+    searchGames: function(query, callback) {
+      conn.query(`SELECT * FROM games WHERE name LIKE ? OR description LIKE ?`, [`%${query}%`, `%${query}%`], function(err, result) {
         if (err) {
           callback(err);
         } else {
@@ -92,7 +86,6 @@ module.exports = function timedOutAPI(conn) {
                 if (err) {
                   callback(err)
                 } else {
-                  console.log(response);
                   return;
                 }
               })
@@ -101,7 +94,7 @@ module.exports = function timedOutAPI(conn) {
             }
           })
           conn.query(`
-          SELECT * FROM games WHERE name LIKE ?`, [`%${query}%`], function(err, results) {
+          SELECT * FROM games WHERE name LIKE ? OR description LIKE ?`, [`%${query}%`, `%${query}%`], function(err, results) {
             if (err) {
               callback(err)
             } else {
@@ -113,36 +106,33 @@ module.exports = function timedOutAPI(conn) {
     },
     listGames: function(callback) {
       conn.query(`
-      SELECT games.id as gameId, games.name as gameName, games.art,
-      games.aliases, games.platform, games.popularity,
-      games.description
-      FROM games
-      GROUP BY gameId
-      ORDER BY popularity
-      LIMIT 4`, function(err, response) {
-        if (err) {
+        SELECT games.name as gameName, games.art,
+        games.aliases, games.platform,
+        games.description, games.popularity,
+        games.id as gameId
+        FROM games
+        GROUP BY gameId
+        ORDER BY popularity DESC
+        `,
+      function(err, result) {
+        if(err) {
           callback(err)
-        } else {
-          console.log(response);
-          var test = response.map(function(t) {
+        }
+        else {
+          callback(null, result.map(function(res) {
             return {
-              id: t.gameId
-            }
-          })
-          callback(null, response.map(function(res) {
-            return {
-              id: res.gameId,
-              name: res.gameName,
+              gameId: res.gameId,
+              gameName: res.gameName,
               art: res.art,
               aliases: res.aliases,
               platform: res.platform,
               description: res.description,
-              popularity: res.popularity
+              popularity: res.popularity,
             }
           }))
-        }
-      })
-    },
+      }
+    })
+  },
     listParties: function(gameId, callback) {
       conn.query(`
         SELECT parties.id as partyId, startTime,
@@ -150,10 +140,11 @@ module.exports = function timedOutAPI(conn) {
         games.name as gameName, games.art,
         games.aliases, games.platform,
         games.description, games.popularity,
-        games.id as gameId,
-        users.id as userId, users.username
-        FROM parties
-        LEFT JOIN games
+        games.id as gameId, count(parties.id) as partyCount,
+        users.id as userId, users.username,
+        parties.size
+        FROM games
+        LEFT JOIN parties
         ON parties.gameId = games.id
         LEFT JOIN registrations
         ON parties.id = registrations.partyId
@@ -180,6 +171,7 @@ module.exports = function timedOutAPI(conn) {
                 platform: row.platform,
                 description: row.description,
                 popularity: row.popularity,
+                partyCount: row.partyCount,
                   parties: []
               };
               games.push(game);
@@ -193,6 +185,7 @@ module.exports = function timedOutAPI(conn) {
               partyBook = {
                 partyId: row.partyId,
                 partyName: row.partyName,
+                size: row.size,
                 startTime: row.startTime,
                 endTime: row.endTime,
                 status: row.success,
@@ -212,114 +205,110 @@ module.exports = function timedOutAPI(conn) {
         callback(null, games)
       }
     })
-  }
+  },
+  createParty: function(options, callback) {
+    var startTime = options.startTime;
+    var endTime = options.endTime;
+    var name = options.name;
+    var size = options.size;
+    var gameId = options.gameId;
+    var userId = options.userId;
+    console.log(userId);
+    conn.query(`
+        SELECT registrations.id
+        FROM registrations
+        WHERE userId = ?`, [userId],
+        function(err, result) {
+          if(err) {
+            callback(err)
+          }
+          else {
+            if(result.length > 0) {
+              console.log('You are already in a party!')
+            }
+            else {
+              conn.query(`
+              INSERT INTO parties(startTime, endTime, name, gameId, size)
+              VALUES(?,?,?,?,?)`, [startTime, endTime, name, gameId, size],
+              function(err, result) {
+                if(err) {
+                  callback(err);
+                }
+                else {
+                  conn.query(`
+                    INSERT INTO registrations(partyId, joined, userId)
+                    VALUES((LAST_INSERT_ID()), NOW(), ?)`, [userId],
+                    function(err, res) {
+                      if(err) {
+                        callback(err);
+                      }
+                      else {
+                        callback(null, res);
+                      }
+                    }
+                  )
+                }
+              })
+            }
+          }
+        }
+      )
+  },
+  editParty: function(options, callback) {
+    var startTime = options.startTime;
+    var endTime = options.endTime;
+    var name = options.name;
+    var size = options.size;
+    var partyId = options.partyId;
+    var userId = options.userId;
+    conn.query(`
+      UPDATE parties
+      SET startTime=?, endTime=?, name=?, size=?
+      WHERE parties.id=?
+      `, [startTime, endTime, name, size, partyId],
+    function(err, result) {
+      if(err) {
+        callback(err)
+      }
+      else {
+        callback(null, result)
+      }
+    })
+  },
+  joinParty: function(options, callback) {
+    var userId = options.userId;
+    var partyId = options.partyId;
+    conn.query(`
+      SELECT COUNT(*) as count, parties.size
+      FROM registrations
+      LEFT JOIN parties
+      ON partyId = parties.id
+      WHERE partyId=?`, [partyId],
+    function(err, res) {
+      if(err) {
+        callback(err);
+      }
+      else {
+        if(res[0].count >= res[0].size) {
+          console.log("Party is full!")
+        }
+        else {
+          conn.query(`
+            INSERT INTO registrations(partyId, userId, joined)
+            VALUES(?,?,NOW())`, [partyId, userId],
+            function(err, result) {
+              if(err) {
+                console.log('You are already in a party!')
+              }
+              else {
+                callback(null, result);
+              }
+            }
+          )
+        }
+      }
+    })
+  },
+
   }
 }
-
-//   createUser: function(user, callback) {
-//
-//     // first we have to hash the password...
-//     bcrypt.hash(user.password, HASH_ROUNDS, function(err, hashedPassword) {
-//       if (err) {
-//         callback(err);
-//       }
-//       else {
-//         conn.query(
-//           'INSERT INTO users (username,password, createdAt) VALUES (?, ?, ?)', [user.username, hashedPassword, new Date()],
-//           function(err, result) {
-//             if (err) {
-//               /*
-//               There can be many reasons why a MySQL query could fail. While many of
-//               them are unknown, there's a particular error about unique usernames
-//               which we can be more explicit about!
-//               */
-//               if (err.code === 'ER_DUP_ENTRY') {
-//                 callback(new Error('A user with this username already exists'));
-//               }
-//               else {
-//                 callback(err);
-//               }
-//             }
-//             else {
-//               /*
-//               Here we are INSERTing data, so the only useful thing we get back
-//               is the ID of the newly inserted row. Let's use it to find the user
-//               and return it
-//               */
-//               conn.query(
-//                 'SELECT id, username, createdAt, updatedAt FROM users WHERE id = ?', [result.insertId],
-//                 function(err, result) {
-//                   if (err) {
-//                     callback(err);
-//                   }
-//                   else {
-//                     /*
-//                     Finally! Here's what we did so far:
-//                     1. Hash the user's password
-//                     2. Insert the user in the DB
-//                     3a. If the insert fails, report the error to the caller
-//                     3b. If the insert succeeds, re-fetch the user from the DB
-//                     4. If the re-fetch succeeds, return the object to the caller
-//                     */
-//                       callback(null, result[0]);
-//                   }
-//                 }
-//               );
-//             }
-//           }
-//         );
-//       }
-//     });
-//   },
-//   createPost: function(post, callback) {
-//     conn.query(
-//       'INSERT INTO posts (userId, title, url, createdAt) VALUES (?, ?, ?, ?)', [post.userId, post.title, post.url, new Date()],
-//       function(err, result) {
-//         if (err) {
-//           callback(err);
-//         }
-//         else {
-//           /*
-//           Post inserted successfully. Let's use the result.insertId to retrieve
-//           the post and send it to the caller!
-//           */
-//           conn.query(
-//             'SELECT id,title,url,userId, createdAt, updatedAt FROM posts WHERE id = ?', [result.insertId],
-//             function(err, result) {
-//               if (err) {
-//                 callback(err);
-//               }
-//               else {
-//                 callback(null, result[0]);
-//               }
-//             }
-//           );
-//         }
-//       }
-//     );
-//   },
-//   getAllPosts: function(options, callback) {
-//     // In case we are called without an options parameter, shift all the parameters manually
-//     if (!callback) {
-//       callback = options;
-//       options = {};
-//     }
-//     var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
-//     var offset = (options.page || 0) * limit;
-//
-//     conn.query(`
-//       SELECT id, title, url, userId, createdAt, updatedAt
-//       FROM posts
-//       ORDER BY createdAt DESC
-//       LIMIT ? OFFSET ?`
-//       , [limit, offset],
-//       function(err, results) {
-//         if (err) {
-//           callback(err);
-//         }
-//         else {
-//           callback(null, results);
-//         }
-//       }
-//     );
-//   }

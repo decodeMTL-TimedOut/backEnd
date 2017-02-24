@@ -7,33 +7,6 @@
     platform: `pc`,
     description: `the world's biggest time sink`,
     popularity: 100,
-       parties : [
-         {
-           partyId: 54321,
-           partName: `ganking noobs in Westfall!`,
-           startTime: date(),
-           endTime: date(),
-           status: `open|confirmed`,
-             players: [
-               {
-                 userId: 43513,
-                 username: pickleBoy123
-               },
-               {
-                 player2
-               },
-               {
-                 player3
-               }
-           ]
-         },
-         {
-           party2
-         },
-         {
-           party3
-         }
-       ]
     },
     {
       game2
@@ -51,10 +24,12 @@
     platform: `pc`,
     description: `the world's biggest time sink`,
     popularity: 100,
+    partyCount: 5,
        parties : [
          {
            partyId: 54321,
            partyName: `ganking noobs in Westfall!`,
+           size: 5,
            startTime: date(),
            endTime: date(),
            status: `open|confirmed`,
@@ -84,6 +59,7 @@
   {
     partyId: 123,
     partyName: `Ganking noobs in Westfall!`,
+    size: 5,
     startTime: date(),
     endTime: date(),
     status: `open`,
@@ -102,6 +78,7 @@
     {
       partyId: 123,
       partyName: `Ganking noobs in Westfall!`,
+      size: 5,
       startTime: date(),
       endTime: date(),
       status: `open|confirmed`
@@ -149,6 +126,7 @@
 /search?s=SEARCHPARTY_QUERY
 [{
       partyName: `Ganking noobs in Westfall!`,
+      size: 5,
       startTime: date(),
       endTime: date(),
       status: `open|confirmed`,
@@ -192,6 +170,7 @@
        {
          partyId: 54321,
          partyName: `ganking noobs in Westfall!`,
+         size: 5,
          startTime: date(),
          endTime: date(),
          status: `open|confirmed`,
