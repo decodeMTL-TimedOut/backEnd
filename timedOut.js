@@ -11,7 +11,7 @@ module.exports = function timedOutAPI(conn) {
         } else {
           callback(null, result);
         }
-      })
+      });
     },
     searchGB: function(query, callback) {
       var GBkey = '24c521131ec5e42ac4bf79f04cb0993a672588b6';
@@ -28,7 +28,7 @@ module.exports = function timedOutAPI(conn) {
         if (err) {
           callback(err);
         } else {
-          data = JSON.parse(response.body);
+          var data = JSON.parse(response.body);
           var dataObj = data.results.map(function(res) {
             return {
               name: res.name,
@@ -59,11 +59,11 @@ module.exports = function timedOutAPI(conn) {
               aliases: res.aliases,
               platforms: res.platforms
                 ? res.platforms.map(function(plats) {
-                  return {name: plats.name, id: plats.id, abbreviation: plats.abbreviation}
+                  return {name: plats.name, id: plats.id, abbreviation: plats.abbreviation};
                 })
                 : null,
               deck: res.deck
-            }
+            };
           }).forEach(function(dataObj, i, array) {
             if (i < 6) {
               this.name = dataObj.name;
@@ -71,7 +71,7 @@ module.exports = function timedOutAPI(conn) {
               this.art = `${dataObj.art.icon_url} ${dataObj.art.medium_url} ${dataObj.art.screen_url} ${dataObj.art.small_url} ${dataObj.art.super_url} ${dataObj.art.thumb_url} ${dataObj.art.tiny_url}`;
               this.aliases = dataObj.aliases;
               this.platforms = dataObj.platforms.map(function(plats) {
-                return plats.name
+                return plats.name;
               }).join(',');
               this.description = dataObj.deck;
               conn.query(`
@@ -86,27 +86,27 @@ module.exports = function timedOutAPI(conn) {
                 this.description
               ], function(err, response) {
                 if (err) {
-                  callback(err)
+                  callback(err);
                 } else {
                   return;
                 }
-              })
+              });
             } else {
               return;
             }
-          })
+          });
           conn.query(`
           SELECT * FROM games WHERE name LIKE ? OR description LIKE ?`, [
             `%${query}%`, `%${query}%`
           ], function(err, results) {
             if (err) {
-              callback(err)
+              callback(err);
             } else {
-              callback(null, results)
+              callback(null, results);
             }
-          })
+          });
         }
-      })
+      });
     },
     listGames: function(callback) {
       conn.query(`
@@ -119,21 +119,21 @@ module.exports = function timedOutAPI(conn) {
         ORDER BY popularity DESC
         `, function(err, result) {
         if (err) {
-          callback(err)
+          callback(err);
         } else {
           callback(null, result.map(function(res) {
             return {
               gameId: res.gameId,
               gameName: res.gameName,
-              // art: res.art,
+              art: res.art,
               aliases: res.aliases,
               platform: res.platform,
-              // description: res.description,
+              description: res.description,
               popularity: res.popularity
-            }
-          }))
+            };
+          }));
         }
-      })
+      });
     },
     listParties: function(gameId, callback) {
       conn.query(`  SELECT parties.id as partyId, startTime,
@@ -142,7 +142,9 @@ module.exports = function timedOutAPI(conn) {
         games.aliases, games.platform,
         games.description, games.popularity,
         games.id as gameId, users.id as userId,
-        users.username, parties.size
+        users.username, parties.size,
+        tags.pvp, tags.pve, tags.exp, tags.farm,
+        tags.pro, tags.noob, tags.comp, tags.casual
         FROM games
         LEFT JOIN parties
         ON parties.gameId = games.id
@@ -150,10 +152,12 @@ module.exports = function timedOutAPI(conn) {
         ON parties.id = registrations.partyId
         LEFT JOIN users
         ON registrations.userId = users.id
+        LEFT JOIN tags
+        ON parties.id = tags.partyId
         WHERE gameId = ?
         `, [`${gameId}`], function(err, response) {
         if (err) {
-          callback(err)
+          callback(err);
         } else {
           var games = response.reduce(function(games, row) {
             var game = games.find(function(game) {
@@ -186,19 +190,30 @@ module.exports = function timedOutAPI(conn) {
                 startTime: row.startTime,
                 endTime: row.endTime,
                 status: row.confirm,
-                users: []
+                users: [],
+                tags: []
               };
               game.parties.push(partyBook);
             }
 
             partyBook.users.push({userId: row.userId, username: row.username});
+            partyBook.tags.push({
+              pvp: row.pvp,
+              pve: row.pve,
+              exp: row.exp,
+              farm: row.farm,
+              pro: row.pro,
+              noob: row.noob,
+              comp: row.comp,
+              casual: row.casual
+            });
 
             return games;
           }, []);
 
           callback(null, games[0]);
         }
-      })
+      });
     },
     createParty: function(create, callback) {
       var startTime = create.startTime;
@@ -207,15 +222,23 @@ module.exports = function timedOutAPI(conn) {
       var size = create.size;
       var gameId = create.gameId;
       var userId = create.userId;
+      var pvp = create.tags.pvp;
+      var pve = create.tags.pve;
+      var exp = create.tags.exp;
+      var farm = create.tags.farm;
+      var pro = create.tags.pro;
+      var noob = create.tags.noob;
+      var comp = create.tags.comp;
+      var casual = create.tags.casual;
       conn.query(`
         SELECT registrations.id
         FROM registrations
         WHERE userId = ?`, [userId], function(err, result) {
         if (err) {
-          callback(err)
+          callback(err);
         } else {
           if (result.length > 0) {
-            callback('You are already in a party!')
+            callback('You are already in a party!');
           } else {
             conn.query(`
               INSERT INTO parties(startTime, endTime, name, gameId, size)
@@ -231,51 +254,80 @@ module.exports = function timedOutAPI(conn) {
                   if (err) {
                     callback(err);
                   } else {
-                      conn.query(`
-                        SELECT parties.id as partyId,
-                        registrations.id as regId,
-                        registrations.joined,
-                        registrations.left as whenLeft,
-                        users.username, users.email
-                        FROM parties
-                        LEFT JOIN registrations
-                        ON parties.id = registrations.partyId
-                        LEFT JOIN users
-                        ON registrations.userId = users.id
-                        WHERE registrations.userId = ?
-                        `, [userId],
-                      function(err, re) {
-                        if(err) {
-                          callback(err);
-                        }
-                        else {
-
-                          callback(null, {
-                            partyId: re[0].partyId,
-                            partyName: name,
-                            size: size,
-                            startTime: startTime,
-                            endTime: endTime,
-                            status: `open`,
-                            registration:
-                            {
-                              regId: re[0].regId,
-                              userId: userId,
-                              joined: re[0].joined,
-                              left: re[0].whenLeft,
-                              username: re[0].username,
-                              email: re[0].email
-                            }
-                          })
-                        }
-                      })
+                    conn.query(`
+                      INSERT INTO tags(partyId, pvp, pve, exp, farm, pro, noob, comp, casual)
+                      VALUES((SELECT partyId FROM registrations WHERE userId=?),
+                      ?,?,?,?,?,?,?,?)`, [
+                      userId,
+                      pvp,
+                      pve,
+                      exp,
+                      farm,
+                      pro,
+                      noob,
+                      comp,
+                      casual
+                    ], function(err, resu) {
+                      if (err) {
+                        callback(err);
+                      } else {
+                        conn.query(`
+                            SELECT parties.id as partyId,
+                            registrations.id as regId,
+                            registrations.joined,
+                            registrations.left as whenLeft,
+                            users.username, users.email,
+                            tags.pvp, tags.pve, tags.exp, tags.farm,
+                            tags.pro, tags.noob, tags.comp, tags.casual
+                            FROM parties
+                            LEFT JOIN registrations
+                            ON parties.id = registrations.partyId
+                            LEFT JOIN users
+                            ON registrations.userId = users.id
+                            LEFT JOIN tags
+                            ON parties.id = tags.partyId
+                            WHERE registrations.userId = ?
+                            `, [userId], function(err, re) {
+                          if (err) {
+                            callback(err);
+                          } else {
+                            callback(null, {
+                              partyId: re[0].partyId,
+                              partyName: name,
+                              size: size,
+                              startTime: startTime,
+                              endTime: endTime,
+                              status: `open`,
+                              tags: {
+                                pvp: re[0].pvp,
+                                pve: re[0].pve,
+                                exp: re[0].exp,
+                                farm: re[0].farm,
+                                pro: re[0].pro,
+                                noob: re[0].noob,
+                                comp: re[0].comp,
+                                casual: re[0].casual
+                              },
+                              registration: {
+                                regId: re[0].regId,
+                                userId: userId,
+                                joined: re[0].joined,
+                                left: re[0].whenLeft,
+                                username: re[0].username,
+                                email: re[0].email
+                              }
+                            });
+                          }
+                        });
+                      }
+                    });
                   }
-                })
+                });
               }
-            })
+            });
           }
         }
-      })
+      });
     },
     editParty: function(edit, callback) {
       var startTime = edit.startTime;
@@ -284,25 +336,60 @@ module.exports = function timedOutAPI(conn) {
       var size = edit.size;
       var partyId = edit.partyId;
       var userId = edit.userId;
+      var pvp = edit.tags.pvp;
+      var pve = edit.tags.pve;
+      var exp = edit.tags.exp;
+      var farm = edit.tags.farm;
+      var pro = edit.tags.pro;
+      var noob = edit.tags.noob;
+      var comp = edit.tags.comp;
+      var casual = edit.tags.casual;
       conn.query(`
       UPDATE parties
-      SET startTime=?, endTime=?, name=?, size=?
+      LEFT JOIN tags
+      ON parties.id = tags.partyId
+      SET parties.startTime=?, parties.endTime=?, parties.name=?, parties.size=?,
+      tags.partyId=?, tags.pvp=?, tags.pve=?, tags.exp=?, tags.farm=?,
+      tags.pro=?, tags.noob=?, tags.comp=?, tags.casual=?
       WHERE parties.id=?
       `, [
-        startTime, endTime, name, size, partyId
+        startTime,
+        endTime,
+        name,
+        size,
+        partyId,
+        pvp,
+        pve,
+        exp,
+        farm,
+        pro,
+        noob,
+        comp,
+        casual,
+        partyId
       ], function(err, result) {
         if (err) {
-          callback(err)
+          callback(err);
         } else {
           callback(null, {
             partyId: partyId,
             partyName: name,
             size: size,
             startTime: startTime,
-            endTime: endTime
-          })
+            endTime: endTime,
+            tags: {
+              pvp: pvp,
+              pve: pve,
+              exp: exp,
+              farm: farm,
+              pro: pro,
+              noob: noob,
+              comp: comp,
+              casual: casual
+            }
+          });
         }
-      })
+      });
     },
     joinParty: function(join, callback) {
       var userId = join.userId;
@@ -317,7 +404,7 @@ module.exports = function timedOutAPI(conn) {
           callback(err);
         } else {
           if (res[0].count >= res[0].size) {
-            callback("Party is full!")
+            callback("Party is full!");
           } else {
             conn.query(`
             INSERT INTO registrations(partyId, userId, joined)
@@ -325,7 +412,7 @@ module.exports = function timedOutAPI(conn) {
               partyId, userId
             ], function(err, result) {
               if (err) {
-                callback('You are already in a party!')
+                callback('You are already in a party!');
               } else {
                 conn.query(`
                   SELECT registrations.id as regId,
@@ -336,24 +423,21 @@ module.exports = function timedOutAPI(conn) {
                   LEFT JOIN users
                   ON registrations.userId = users.id
                   WHERE partyId=?
-                  `, [partyId],
-                function(err, result) {
-                  if(err) {
+                  `, [partyId], function(err, result) {
+                  if (err) {
                     callback(err);
-                  }
-                  else {
+                  } else {
                     callback(null, {
                       partyId: partyId,
                       registrations: result
-                    })
+                    });
                   }
-                }
-                )
+                });
               }
-            })
+            });
           }
         }
-      })
+      });
     },
     leaveParty: function(leave, callback) {
       var userId = leave.userId;
@@ -361,7 +445,7 @@ module.exports = function timedOutAPI(conn) {
       var party = {
         partyId: partyId,
         userId: userId
-      }
+      };
       conn.query(`
           DELETE FROM registrations
           WHERE userId=? AND partyId=?;
@@ -373,7 +457,7 @@ module.exports = function timedOutAPI(conn) {
         } else {
           callback(null, party);
         }
-      })
+      });
     },
     deleteParty: function(del, callback) {
       var partyId = del.partyId;
@@ -394,9 +478,9 @@ module.exports = function timedOutAPI(conn) {
             } else {
               callback(null, party);
             }
-          })
+          });
         }
-      })
+      });
     },
     confirmParty: function(confirm, callback) {
       var partyId = confirm.partyId;
@@ -422,7 +506,7 @@ module.exports = function timedOutAPI(conn) {
               } else {
                 callback(null, party);
               }
-            })
+            });
           } else {
             conn.query(`
                     UPDATE parties
@@ -433,11 +517,11 @@ module.exports = function timedOutAPI(conn) {
               } else {
                 callback(null, party);
               }
-            })
+            });
           }
         }
-      }
-    )},
+      });
+    },
     searchParty: function(search, callback) {
       var query = search.query;
       var size = search.size;
@@ -451,7 +535,8 @@ module.exports = function timedOutAPI(conn) {
         games.description, games.popularity, games.art,
         registrations.id as regId, registrations.userId,
         registrations.joined, registrations.left as whenLeft,
-        users.username, users.email
+        users.username, users.email, tags.pvp, tags.pve, tags.exp, tags.farm,
+        tags.pro, tags.noob, tags.comp, tags.casual
         FROM parties
         LEFT JOIN games
         ON parties.gameId = games.id
@@ -459,15 +544,17 @@ module.exports = function timedOutAPI(conn) {
         ON parties.id = registrations.partyId
         LEFT JOIN users
         ON users.id = registrations.userId
+        LEFT JOIN tags
+        ON parties.id = tags.partyId
         WHERE parties.size = ? AND parties.startTime > ?
         AND parties.gameId = ? AND parties.name LIKE ?
         ORDER BY parties.startTime ASC
-        `, [size, startTime, gameId, `%${query}%`],
-      function(err, response) {
-        if(err) {
+        `, [
+        size, startTime, gameId, `%${query}%`
+      ], function(err, response) {
+        if (err) {
           callback(err);
-        }
-        else {
+        } else {
           var parties = response.reduce(function(parties, row) {
             var party = parties.find(function(party) {
               return party.partyId === row.partyId;
@@ -481,6 +568,16 @@ module.exports = function timedOutAPI(conn) {
                 startTime: row.startTime,
                 endTime: row.endTime,
                 status: row.confirm,
+                tags: {
+                  pvp: row.pvp,
+                  pve: row.pve,
+                  exp: row.exp,
+                  farm: row.farm,
+                  pro: row.pro,
+                  noob: row.noob,
+                  comp: row.comp,
+                  casual: row.casual
+                },
                 game: {
                   gameId: row.gameId,
                   gameName: row.gameName,
@@ -506,7 +603,7 @@ module.exports = function timedOutAPI(conn) {
                 joined: row.joined,
                 left: row.whenLeft,
                 username: row.username,
-                email: row.email,
+                email: row.email
               };
               party.registrations.push(registration);
             }
@@ -514,7 +611,7 @@ module.exports = function timedOutAPI(conn) {
           }, []);
           callback(null, parties);
         }
-      }
-    )}
-  }
-}
+      });
+    }
+  };
+};

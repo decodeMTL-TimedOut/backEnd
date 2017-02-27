@@ -25,6 +25,16 @@
     description: `the world's biggest time sink`,
     popularity: 100,
     partyCount: 5,
+      tags: {
+              pvp: 1,
+              pve: 0,
+              exp: 1,
+              farm: 1,
+              pro: 1,
+              noob: 0,
+              comp: 1,
+              casual: 0
+            },
        parties : [
          {
            partyId: 54321,
@@ -63,6 +73,16 @@
     startTime: date(),
     endTime: date(),
     status: `open`,
+      tags: {
+              pvp: 1,
+              pve: 0,
+              exp: 1,
+              farm: 1,
+              pro: 1,
+              noob: 0,
+              comp: 1,
+              casual: 0
+            },
       registration:
         {
           regId: 123,
@@ -81,7 +101,16 @@
       size: 5,
       startTime: date(),
       endTime: date(),
-      // status: `open|confirmed`
+        tags: {
+          pvp: 1,
+          pve: 0,
+          exp: 1,
+          farm: 1,
+          pro: 1,
+          noob: 0,
+          comp: 1,
+          casual: 0
+        }
     }
 
    /games/:id/parties/:partyId/join [post] - join a party
@@ -135,6 +164,16 @@
           platform: `pc`,
           description: `the world's biggest time sink`,
           popularity: 100,
+        },
+        tags: {
+          pvp: 1,
+          pve: 0,
+          exp: 1,
+          farm: 1,
+          pro: 1,
+          noob: 0,
+          comp: 1,
+          casual: 0
         },
         registrations: [
           {

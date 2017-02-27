@@ -4,7 +4,7 @@ var connection = mysql.createConnection({host: 'localhost', user: 'root', passwo
 var timedOut = require('./timedOut');
 var timedOutAPI = timedOut(connection);
 var express = require('express');
-// var app = express();
+var app = express();
 
 // search our DB
 // var query = ''
@@ -62,7 +62,7 @@ var express = require('express');
 // })
 
 // //list parties
-// var gameId = '42'
+// var gameId = '42';
 // timedOutAPI.listParties(gameId, function(err, result) {
 //   if(err) {
 //     console.log(err);
@@ -70,7 +70,7 @@ var express = require('express');
 //   else {
 //     console.log(JSON.stringify(result));
 //     }
-// })
+// });
 
 // create party
 // var date = Date.now();
@@ -80,27 +80,47 @@ var express = require('express');
 // timedOutAPI.createParty({
 //   startTime: '2017-02-27 00:00:00',
 //   endTime: '2017-02-28 00:00:00',
-//   name: 'I was saying boo urns',
+//   name: 'Mario tennis YOSHI only',
 //   gameId: 42,
 //   size: 4,
-//   userId: 3
+//   userId: 1,
+  // tags: {
+  //   pvp: 1,
+  //   pve: 0,
+  //   exp: 1,
+  //   farm: 1,
+  //   pro: 1,
+  //   noob: 0,
+  //   comp: 1,
+  //   casual: 0
+  // }
 // }, function(err, result) {
 //   if(err) {
-//     console.log(err)
+//     console.log(err);
 //   }
 //   else {
 //     console.log(JSON.stringify(result));
 //   }
-// })
+// });
 
-//edit party
+// edit party
 // timedOutAPI.editParty({
-//   startTime: '2017-02-28 00:00:00',
-//   endTime: '2017-03-01 00:00:00',
-//   name: 'boo this party is changed',
+//   startTime: '2017-02-27 00:00:00',
+//   endTime: '2017-02-28 00:00:00',
+//   name: 'Mario tennis YOSHI only',
 //   gameId: 42,
 //   size: 4,
-//   partyId: 21,
+//   partyId: 28,
+//   tags: {
+//         pvp: 0,
+//         pve: 0,
+//         exp: 0,
+//         farm: 0,
+//         pro: 0,
+//         noob: 1,
+//         comp: 0,
+//         casual: 0
+//       }
 // }, function(err, result) {
 //     if(err) {
 //       console.log(err);
@@ -109,7 +129,7 @@ var express = require('express');
 //       console.log(JSON.stringify(result));
 //     }
 //   }
-// )
+// );
 
 //join party
 // timedOutAPI.joinParty({
@@ -123,10 +143,10 @@ var express = require('express');
 //   }
 // })
 
-//leave/kick
+// leave/kick
 // timedOutAPI.leaveParty({
-//   partyId: 25,
-//   userId: 3
+//   partyId: 27,
+//   userId: 1
 // }, function(err, result) {
 //   if(err) {
 //     console.log(err);
@@ -134,7 +154,7 @@ var express = require('express');
 //   else {
 //     console.log(JSON.stringify(result));
 //   }
-// })
+// });
 
 //delete party
 // timedOutAPI.deleteParty({

@@ -11,37 +11,47 @@ app.get('/main', function(request, response) {
     if (err) {
       console.log(err);
     } else {
-      console.log(JSON.stringify(result));
+      response.send(JSON.stringify({result}));
     }
-  })
-})
+  });
+});
 
 app.get('/games/:id', function(request, response) {
   timedOutAPI.listParties(request.params.id, function(err, result) {
     if (err) {
-      console.log(err)
+      console.log(err);
     } else {
-      console.log(JSON.stringify(result));
+      response.send(JSON.stringify({result}));
     }
-  })
-})
+  });
+});
 
-app.post('/games/:id/parties/create', function(request, response) {
+app.post('/games/:id/parties/create/', function(request, response) {
   timedOutAPI.createParty({
     startTime: response.body.starTime,
     endTime: response.body.endTime,
     name: response.body.name,
     gameId: request.params.id,
     size: response.body.size,
-    userId: loggedinuser
+    userId: request.body.userId,
+    tags: {
+      pvp: 1,
+      pve: 0,
+      exp: 1,
+      farm: 1,
+      pro: 1,
+      noob: 0,
+      comp: 1,
+      casual: 0
+    }
   }, function(err, result) {
     if (err) {
       console.log(err);
     } else {
-      console.log(JSON.stringify(result));
+      response.send(JSON.stringify({result}));
     }
-  })
-})
+  });
+});
 
 app.post('/games/:id/parties/:partyId/edit', function(request, response) {
   timedOutAPI.editParty({
@@ -50,16 +60,26 @@ app.post('/games/:id/parties/:partyId/edit', function(request, response) {
     name: response.body.name,
     gameId: request.params.id,
     size: response.body.size,
-    partyId: request.params.partyId
+    partyId: request.params.partyId,
+    tags: {
+      pvp: 1,
+      pve: 0,
+      exp: 1,
+      farm: 1,
+      pro: 1,
+      noob: 0,
+      comp: 1,
+      casual: 0
+    }
   }, function(err, result) {
     if (err) {
       console.log(err);
     } else {
-      console.log(JSON.stringify(result));
+      response.send(JSON.stringify({result}));
     }
   }
-})
-})
+);
+});
 
 app.post('/games/:id/parties/:partyId/join', function(request, response) {
   timedOutAPI.joinParty({
@@ -69,10 +89,10 @@ app.post('/games/:id/parties/:partyId/join', function(request, response) {
   if (err) {
     console.log(err);
   } else {
-    console.log(JSON.stringify(result));
+    response.send(JSON.stringify({result}));
   }
-})
-})
+});
+});
 
 app.post('/games/:id/parties/:partyId/leave', function(request, response) {
   timedOutAPI.leaveParty({
@@ -83,10 +103,10 @@ app.post('/games/:id/parties/:partyId/leave', function(request, response) {
       console.log(err);
     }
     else {
-      console.log(JSON.stringify(result));
+      response.send(JSON.stringify({result}));
     }
-  })
-})
+  });
+});
 
 app.post('/games/:id/parties/:partyId/delete', function(request, response) {
   timedOutAPI.deleteParty({
@@ -98,8 +118,8 @@ app.post('/games/:id/parties/:partyId/delete', function(request, response) {
     else {
       console.log(JSON.stringify(result));
     }
-  })
-})
+  });
+});
 
 app.post('/games/:id/parties/:partyId/confirm', function(request, response) {
   timedOutAPI.confirmParty({
@@ -111,8 +131,8 @@ app.post('/games/:id/parties/:partyId/confirm', function(request, response) {
     else {
       console.log(JSON.stringify(result));
     }
-  })
-})
+  });
+});
 // query search with => /?search=
 app.post('/games/:id/search/:size/:startTime', function(request, response) {
   var search = request.query.search;
@@ -131,8 +151,8 @@ app.post('/games/:id/search/:size/:startTime', function(request, response) {
     else {
       console.log(JSON.stringify(result));
     }
-  })
-})
+  });
+});
 
 var server = app.listen(3000, 'http://localhost', function() {
 var host = server.address().address;
