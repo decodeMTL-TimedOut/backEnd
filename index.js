@@ -1,6 +1,13 @@
 var mysql = require('mysql');
 var request = require('request');
-var connection = mysql.createConnection({host: 'localhost', user: 'root', password: 'timedOut', database: 'timedOut'});
+var mysql = require('mysql');
+var connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'leblancbryan',
+  password: '',
+  database: 'reddit',
+  multipleStatements: true
+});
 var timedOut = require('./timedOut');
 var timedOutAPI = timedOut(connection);
 var express = require('express');
