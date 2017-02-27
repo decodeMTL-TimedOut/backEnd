@@ -5,7 +5,7 @@ var connection = mysql.createConnection({
   host: 'localhost',
   user: 'leblancbryan',
   password: '',
-  database: 'reddit',
+  database: 'timedOut',
   multipleStatements: true
 });
 var timedOut = require('./timedOut');
@@ -161,8 +161,9 @@ app.post('/games/:id/search/:size/:startTime', function(request, response) {
   });
 });
 
-var server = app.listen(3000, 'http://localhost', function() {
-var host = server.address().address;
-var port = server.address().port;
+
+var server = app.listen(process.env.PORT, process.env.IP, function() {
+  var host = server.address().address;
+  var port = server.address().port;
   console.log('Example app listening at http://%s:%s', host, port);
 });

@@ -255,10 +255,11 @@ module.exports = function timedOutAPI(conn) {
                     callback(err);
                   } else {
                     conn.query(`
-                      INSERT INTO tags(partyId, pvp, pve, exp, farm, pro, noob, comp, casual)
+                      INSERT INTO tags(partyId, gameId, pvp, pve, exp, farm, pro, noob, comp, casual)
                       VALUES((SELECT partyId FROM registrations WHERE userId=?),
-                      ?,?,?,?,?,?,?,?)`, [
+                      ?,?,?,?,?,?,?,?,?)`, [
                       userId,
+                      gameId,
                       pvp,
                       pve,
                       exp,
