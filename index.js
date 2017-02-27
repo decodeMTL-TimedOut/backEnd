@@ -23,6 +23,18 @@ app.get('/main', function(request, response) {
   });
 });
 
+app.post('/search', function(request, response) {
+  var query = request.query.q;
+  timedOutAPI.searchGB(query, function(err, result) {
+    if(err) {
+      console.log(err);
+    }
+    else {
+      response.send(JSON.stringify({result}));
+    }
+  })
+})
+
 app.get('/games/:id', function(request, response) {
   timedOutAPI.listParties(request.params.id, function(err, result) {
     if (err) {
@@ -140,6 +152,9 @@ app.post('/games/:id/parties/:partyId/confirm', function(request, response) {
     }
   });
 });
+
+// app.post(/main/)
+
 // query search with => /?search=
 app.post('/games/:id/search/:size/:startTime', function(request, response) {
   var search = request.query.search;

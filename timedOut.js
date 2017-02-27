@@ -140,7 +140,7 @@ module.exports = function timedOutAPI(conn) {
       });
     },
     listParties: function(gameId, callback) {
-      conn.query(`  SELECT parties.id as partyId, startTime,
+      conn.query(`SELECT parties.id as partyId, startTime,
         endTime, confirm, parties.name as partyName,
         games.name as gameName, games.art,
         games.aliases, games.platform,
@@ -158,7 +158,8 @@ module.exports = function timedOutAPI(conn) {
         ON registrations.userId = users.id
         LEFT JOIN tags
         ON parties.id = tags.partyId
-        WHERE gameId = ?
+        WHERE gameId = ? AND endTime > NOW()
+        ORDER BY startTime ASC
         `, [`${gameId}`], function(err, response) {
         if (err) {
           callback(err);
