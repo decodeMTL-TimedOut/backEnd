@@ -34,27 +34,27 @@ module.exports = function timedOutAPI(conn) {
               name: res.name,
               GBid: res.id,
               art: {
-                icon_url: res.image
-                  ? res.image.icon_url
-                  : null,
-                medium_url: res.image
-                  ? res.image.medium_url
-                  : null,
-                screen_url: res.image
-                  ? res.image.screen_url
-                  : null,
-                small_url: res.image
-                  ? res.image.small_url
-                  : null,
+                // icon_url: res.image
+                //   ? res.image.icon_url
+                //   : null,
+                // medium_url: res.image
+                //   ? res.image.medium_url
+                //   : null,
+                // screen_url: res.image
+                //   ? res.image.screen_url
+                //   : null,
+                // small_url: res.image
+                //   ? res.image.small_url
+                //   : null,
                 super_url: res.image
                   ? res.image.super_url
                   : null,
-                thumb_url: res.image
-                  ? res.image.thumb_url
-                  : null,
-                tiny_url: res.image
-                  ? res.image.tiny_url
-                  : null
+                // thumb_url: res.image
+                //   ? res.image.thumb_url
+                //   : null,
+                // tiny_url: res.image
+                //   ? res.image.tiny_url
+                //   : null
               },
               aliases: res.aliases,
               platforms: res.platforms
@@ -66,9 +66,13 @@ module.exports = function timedOutAPI(conn) {
             };
           }).forEach(function(dataObj, i, array) {
             if (i < 6) {
+              if(dataObj.art.super_url === null) {
+                return;
+              }
+              else {
               this.name = dataObj.name;
               this.GBid = dataObj.GBid;
-              this.art = `${dataObj.art.icon_url} ${dataObj.art.medium_url} ${dataObj.art.screen_url} ${dataObj.art.small_url} ${dataObj.art.super_url} ${dataObj.art.thumb_url} ${dataObj.art.tiny_url}`;
+              this.art = `${dataObj.art.super_url}`;
               this.aliases = dataObj.aliases;
               this.platforms = dataObj.platforms.map(function(plats) {
                 return plats.name;
@@ -91,7 +95,7 @@ module.exports = function timedOutAPI(conn) {
                   return;
                 }
               });
-            } else {
+            }} else {
               return;
             }
           });

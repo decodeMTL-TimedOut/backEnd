@@ -24,15 +24,15 @@ var app = express();
 // })
 
 //search GB
-// var query = 'justice league'
-// timedOutAPI.searchGB(query, function(err, result) {
-//   if(err) {
-//     console.log(err)
-//   }
-//   else {
-//     console.log(JSON.stringify(result));
-//   }
-// })
+var query = 'rocket III';
+timedOutAPI.searchGB(query, function(err, result) {
+  if(err) {
+    console.log(err);
+  }
+  else {
+    console.log(JSON.stringify(result));
+  }
+});
 
 // //combo search
 // var query = 'rocket league'
