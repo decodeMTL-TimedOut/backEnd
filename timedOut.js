@@ -140,7 +140,16 @@ module.exports = function timedOutAPI(conn) {
       });
     },
     listParties: function(gameId, callback) {
-      conn.query(`SELECT parties.id as partyId, startTime,
+      conn.query(`
+      UPDATE games
+      SET popularity = (popularity + 1)
+      where games.id = ?`, [gameId],
+      function(err, result) {
+        if(err) {
+          callback(err);
+        }
+        else {
+          conn.query(`SELECT parties.id as partyId, startTime,
         endTime, confirm, parties.name as partyName,
         games.name as gameName, games.art,
         games.aliases, games.platform,
@@ -158,12 +167,13 @@ module.exports = function timedOutAPI(conn) {
         ON registrations.userId = users.id
         LEFT JOIN tags
         ON parties.id = tags.partyId
-        WHERE gameId = ? AND endTime > NOW()
+        WHERE parties.gameId = ? AND endTime > NOW()
         ORDER BY startTime ASC
         `, [`${gameId}`], function(err, response) {
         if (err) {
           callback(err);
         } else {
+          console.log(response);
           var games = response.reduce(function(games, row) {
             var game = games.find(function(game) {
               return game.gameId === row.gameId;
@@ -219,6 +229,9 @@ module.exports = function timedOutAPI(conn) {
           callback(null, games[0]);
         }
       });
+        }
+      }
+      );
     },
     createParty: function(create, callback) {
       var startTime = create.startTime;

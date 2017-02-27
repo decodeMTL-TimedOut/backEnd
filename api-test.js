@@ -24,15 +24,15 @@ var app = express();
 // })
 
 //search GB
-var query = 'rocket III';
-timedOutAPI.searchGB(query, function(err, result) {
-  if(err) {
-    console.log(err);
-  }
-  else {
-    console.log(JSON.stringify(result));
-  }
-});
+// var query = 'mario tennis';
+// timedOutAPI.searchGB(query, function(err, result) {
+//   if(err) {
+//     console.log(err);
+//   }
+//   else {
+//     console.log(JSON.stringify(result));
+//   }
+// });
 
 // //combo search
 // var query = 'rocket league'
@@ -68,7 +68,7 @@ timedOutAPI.searchGB(query, function(err, result) {
 // })
 
 // //list parties
-// var gameId = '42';
+// var gameId = '35';
 // timedOutAPI.listParties(gameId, function(err, result) {
 //   if(err) {
 //     console.log(err);
@@ -86,20 +86,20 @@ timedOutAPI.searchGB(query, function(err, result) {
 // timedOutAPI.createParty({
 //   startTime: '2017-02-27 00:00:00',
 //   endTime: '2017-02-28 00:00:00',
-//   name: 'Mario tennis YOSHI only',
-//   gameId: 42,
+//   name: 'Mario tennis BOO only',
+//   gameId: 35,
 //   size: 4,
-//   userId: 1,
-  // tags: {
-  //   pvp: 1,
-  //   pve: 0,
-  //   exp: 1,
-  //   farm: 1,
-  //   pro: 1,
-  //   noob: 0,
-  //   comp: 1,
-  //   casual: 0
-  // }
+//   userId: 2,
+//   tags: {
+//     pvp: 1,
+//     pve: 0,
+//     exp: 1,
+//     farm: 1,
+//     pro: 1,
+//     noob: 0,
+//     comp: 1,
+//     casual: 0
+//   }
 // }, function(err, result) {
 //   if(err) {
 //     console.log(err);
