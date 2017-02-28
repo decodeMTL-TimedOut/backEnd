@@ -86,6 +86,7 @@ app.post('/games/:id/parties/create', function(request, response) {
     gameId: request.params.id,
     size: request.body.numOfPlayers,
     userId: request.body.userId,
+    username: request.body.username,
       pvp: request.body.tags.pvp,
       pve: request.body.tags.pve,
       exp: request.body.tags.exp,
@@ -132,9 +133,11 @@ app.post('/games/:id/parties/:partyId/edit', function(request, response) {
 });
 
 app.post('/games/:id/parties/:partyId/join', function(request, response) {
+  console.log(request.body);
   timedOutAPI.joinParty({
     partyId: request.params.partyId,
-    userId: request.body.userId
+    userId: request.body.userId,
+    username: request.body.username
   }, function(err, result) {
   if (err) {
     console.log(err);
@@ -145,6 +148,7 @@ app.post('/games/:id/parties/:partyId/join', function(request, response) {
 });
 
 app.post('/games/:id/parties/:partyId/leave', function(request, response) {
+  console.log(request.body);
   timedOutAPI.leaveParty({
     partyId: request.params.id,
     userId: request.body.userId
@@ -159,6 +163,7 @@ app.post('/games/:id/parties/:partyId/leave', function(request, response) {
 });
 
 app.post('/games/:id/parties/:partyId/delete', function(request, response) {
+  console.log(request.body);
   timedOutAPI.deleteParty({
     partyId: request.params.partyId
   }, function(err, result) {
@@ -172,6 +177,7 @@ app.post('/games/:id/parties/:partyId/delete', function(request, response) {
 });
 
 app.post('/games/:id/parties/:partyId/confirm', function(request, response) {
+  console.log(request.body);
   timedOutAPI.confirmParty({
     partyId: request.params.partyId
   }, function(err, result) {

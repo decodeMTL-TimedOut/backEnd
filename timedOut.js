@@ -169,7 +169,7 @@ module.exports = function timedOutAPI(conn) {
         games.aliases, games.platform,
         games.description, games.popularity,
         games.id as gameId, registrations.userId as userId,
-        users.username, parties.size,
+        registrations.username, parties.size,
         tags.pvp, tags.pve, tags.exp, tags.farm,
         tags.pro, tags.noob, tags.comp, tags.casual
         FROM games
@@ -257,6 +257,7 @@ module.exports = function timedOutAPI(conn) {
       var size = create.size;
       var gameId = create.gameId;
       var userId = create.userId;
+      var username = create.username;
       var pvp = create.pvp;
       var pve = create.pve;
       var exp = create.exp;
@@ -287,8 +288,8 @@ module.exports = function timedOutAPI(conn) {
                 }
                 else {
                   conn.query(`
-                    INSERT INTO registrations(partyId, joined, userId)
-                    VALUES((LAST_INSERT_ID()), NOW(), ?)`, [userId], function(err, res) {
+                    INSERT INTO registrations(partyId, joined, userId, username)
+                    VALUES((LAST_INSERT_ID()), NOW(), ?,?)`, [userId, username], function(err, res) {
                     if (err) {
                       callback(err);
                     }
@@ -316,7 +317,7 @@ module.exports = function timedOutAPI(conn) {
                             registrations.id as regId,
                             registrations.joined,
                             registrations.left as whenLeft,
-                            users.username, users.email,
+                            registrations.username, users.email,
                             registrations.userId as userId,
                             tags.pvp, tags.pve, tags.exp, tags.farm,
                             tags.pro, tags.noob, tags.comp, tags.casual
@@ -443,6 +444,7 @@ module.exports = function timedOutAPI(conn) {
     joinParty: function(join, callback) {
       var userId = join.userId;
       var partyId = join.partyId;
+      var username = join.username;
       conn.query(`
       SELECT COUNT(*) as count, parties.size
       FROM registrations
@@ -476,12 +478,12 @@ module.exports = function timedOutAPI(conn) {
                   callback(err);
                 }
                 else {
-                    result.forEach(function(result) {
-                      if (party.startTime > result.endTime || party.endTime < result.startTime) {
+                    // result.every(function(result) {
+                      // if (party.startTime > result.endTime || party.endTime < result.startTime) {
                         conn.query(`
-            INSERT INTO registrations(partyId, userId, joined)
-            VALUES(?,?,NOW())`, [
-                          partyId, userId
+            INSERT INTO registrations(partyId, userId, joined, username)
+            VALUES(?,?,NOW(), ?)`, [
+                          partyId, userId, username
                         ], function(err, result) {
                           if (err) {
                             callback(err);
@@ -491,7 +493,7 @@ module.exports = function timedOutAPI(conn) {
                   SELECT registrations.id as regId,
                   registrations.userId, registrations.joined,
                   registrations.left as whenLeft,
-                  users.username, users.email
+                  registrations.username, users.email
                   FROM registrations
                   LEFT JOIN users
                   ON registrations.userId = users.id
@@ -509,11 +511,11 @@ module.exports = function timedOutAPI(conn) {
                             });
                           }
                         });
-                      }
-                      else {
-                        callback('You are already in a party for this time');
-                      }
-                    });
+                      // }
+                      // else {
+                      //   callback('You are already in a party for this time');
+                      // }
+                    // });
                   }});
                 }
               });
@@ -624,7 +626,7 @@ module.exports = function timedOutAPI(conn) {
         games.description, games.popularity, games.art,
         registrations.id as regId, registrations.userId,
         registrations.joined, registrations.left as whenLeft,
-        users.username, users.email, tags.pvp, tags.pve, tags.exp, tags.farm,
+        registrations.username, users.email, tags.pvp, tags.pve, tags.exp, tags.farm,
         tags.pro, tags.noob, tags.comp, tags.casual
         FROM parties
         LEFT JOIN games
