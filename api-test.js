@@ -12,6 +12,32 @@ var timedOutAPI = timedOut(connection);
 var express = require('express');
 var app = express();
 
+
+  // var query = 'mario';
+  // timedOutAPI.searchGames(query, function(err, result) {
+  //   if(err) {
+  //     console.log(err);
+  //   }
+  //   else {
+  //     if((JSON.stringify({result}).length) < 11) {
+  //       timedOutAPI.searchGB(query, function(err, res) {
+  //         if(err) {
+  //           console.log(err);
+  //         }
+  //         else {
+  //         console.log(JSON.stringify({res}));
+  //         }
+  //       });
+  //     }
+  //     else {
+  //   console.log(JSON.stringify({result}));
+  //     }
+  //   }
+  // });
+
+
+
+
 // search our DB
 // var query = ''
 // timedOutAPI.searchGames(query, function(err, result) {
@@ -84,12 +110,12 @@ var app = express();
 // date = date.getUTCFullYear() + '-' + ('00' + (date.getUTCMonth() + 1)).slice(-2) + '-' + ('00' + date.getUTCDate()).slice(-2) + ' ' + ('00' + date.getUTCHours()).slice(-2) + ':' + ('00' + date.getUTCMinutes()).slice(-2) + ':' + ('00' + date.getUTCSeconds()).slice(-2);
 
 // timedOutAPI.createParty({
-//   startTime: '2017-02-27 00:00:00',
-//   endTime: '2017-02-28 00:00:00',
-//   name: 'Mario tennis BOO only',
-//   gameId: 35,
-//   size: 4,
-//   userId: 2,
+//   startTime: '2017-03-01 00:00:00',
+//   endTime: '2017-03-02 00:00:00',
+//   name: 'hammer time!',
+//   gameId: 1,
+//   size: 5,
+//   userId: 10,
 //   tags: {
 //     pvp: 1,
 //     pve: 0,
@@ -138,16 +164,16 @@ var app = express();
 // );
 
 //join party
-// timedOutAPI.joinParty({
-//   partyId: 21,
-//   userId: 2
-// }, function(err, result) {
-//   if (err) {
-//     console.log(err)
-//   } else {
-//     console.log(JSON.stringify(result));
-//   }
-// })
+timedOutAPI.joinParty({
+  partyId: 3,
+  userId: 6
+}, function(err, result) {
+  if (err) {
+    console.log(err);
+  } else {
+    console.log(JSON.stringify(result));
+  }
+});
 
 // leave/kick
 // timedOutAPI.leaveParty({

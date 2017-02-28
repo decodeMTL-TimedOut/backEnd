@@ -12,6 +12,8 @@ var timedOut = require('./timedOut');
 var timedOutAPI = timedOut(connection);
 var express = require('express');
 var app = express();
+var bodyParser = require('body-parser');
+app.use(bodyParser.json());
 
 app.get('/main', function(request, response) {
   timedOutAPI.listGames(function(err, result) {
@@ -23,17 +25,40 @@ app.get('/main', function(request, response) {
   });
 });
 
-app.post('/search', function(request, response) {
+// app.get('/search', function(request, response) {
+//   timedOutAPI.searchGB(request.query.q, function(err, result) {
+//     if(err) {
+//       console.log(err);
+//     }
+//     else {
+//       response.send(JSON.stringify({result}));
+//     }
+//   });
+// });
+
+app.get('/search', function(request, response) {
   var query = request.query.q;
-  timedOutAPI.searchGB(query, function(err, result) {
+  timedOutAPI.searchGames(query, function(err, result) {
     if(err) {
       console.log(err);
     }
     else {
+      if((JSON.stringify({result}).length) < 11) {
+        timedOutAPI.searchGB(query, function(err, res) {
+          if(err) {
+            console.log(err);
+          }
+          else {
+            response.send(JSON.stringify({res}));
+          }
+        });
+      }
+      else {
       response.send(JSON.stringify({result}));
+      }
     }
-  })
-})
+  });
+});
 
 app.get('/games/:id', function(request, response) {
   timedOutAPI.listParties(request.params.id, function(err, result) {
@@ -45,24 +70,30 @@ app.get('/games/:id', function(request, response) {
   });
 });
 
-app.post('/games/:id/parties/create/', function(request, response) {
+app.get('/games/:id/parties/:partyId', function(request, response) {
+  timedOutAPI.showParty({
+    partyId: request.params.partyId,
+    gameId: request.params.id
+  });
+});
+
+app.post('/games/:id/parties/create', function(request, response) {
+  console.log(request.body);
   timedOutAPI.createParty({
-    startTime: response.body.starTime,
-    endTime: response.body.endTime,
-    name: response.body.name,
+    startTime: request.body.startTime,
+    endTime: request.body.endTime,
+    name: request.body.gameName,
     gameId: request.params.id,
-    size: response.body.size,
+    size: request.body.numOfPlayers,
     userId: request.body.userId,
-    tags: {
-      pvp: 1,
-      pve: 0,
-      exp: 1,
-      farm: 1,
-      pro: 1,
-      noob: 0,
-      comp: 1,
-      casual: 0
-    }
+      pvp: request.body.tags.pvp,
+      pve: request.body.tags.pve,
+      exp: request.body.tags.exp,
+      farm: request.body.tags.farm,
+      pro: request.body.tags.pro,
+      noob: request.body.tags.noob,
+      comp: request.body.tags.comp,
+      casual: request.body.tags.casual
   }, function(err, result) {
     if (err) {
       console.log(err);
@@ -74,9 +105,9 @@ app.post('/games/:id/parties/create/', function(request, response) {
 
 app.post('/games/:id/parties/:partyId/edit', function(request, response) {
   timedOutAPI.editParty({
-    startTime: response.body.starTime,
+    startTime: response.body.startTime,
     endTime: response.body.endTime,
-    name: response.body.name,
+    name: response.body.gameName,
     gameId: request.params.id,
     size: response.body.size,
     partyId: request.params.partyId,
@@ -103,7 +134,7 @@ app.post('/games/:id/parties/:partyId/edit', function(request, response) {
 app.post('/games/:id/parties/:partyId/join', function(request, response) {
   timedOutAPI.joinParty({
     partyId: request.params.partyId,
-    userId: loggedinuser
+    userId: request.body.userId
   }, function(err, result) {
   if (err) {
     console.log(err);
@@ -116,7 +147,7 @@ app.post('/games/:id/parties/:partyId/join', function(request, response) {
 app.post('/games/:id/parties/:partyId/leave', function(request, response) {
   timedOutAPI.leaveParty({
     partyId: request.params.id,
-    userId: loggedinuser||otheruser
+    userId: request.body.userId
   }, function(err, result) {
     if(err) {
       console.log(err);
