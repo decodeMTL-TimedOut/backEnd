@@ -3,13 +3,18 @@ var request = require('request');
 module.exports = function timedOutAPI(conn) {
   return {
     searchGames: function(query, callback) {
-      conn.query(`SELECT * FROM games WHERE name LIKE ? OR description LIKE ? OR aliases LIKE ? ORDER BY popularity DESC`, [
+      conn.query(`SELECT * FROM games WHERE name LIKE ? OR description LIKE ? OR aliases LIKE ? ORDER BY popularity`, [
         `%${query}%`, `%${query}%`, `%${query}%`
       ], function(err, result) {
         if (err) {
           callback(err);
         }
         else {
+          if(Object.keys(result).length === 0 && result.constructor === Object) {
+            result = [];
+            callback(null, result);
+          }
+          else {
           callback(null, result.map(function(res) {
             return {
               gameId: res.id,
@@ -22,7 +27,7 @@ module.exports = function timedOutAPI(conn) {
             };
           }));
         }
-      });
+      }});
     },
     searchGB: function(query, callback) {
       var GBkey = '24c521131ec5e42ac4bf79f04cb0993a672588b6';
@@ -46,8 +51,8 @@ module.exports = function timedOutAPI(conn) {
               name: res.name,
               GBid: res.id,
               art: {
-                super_url: res.image ?
-                  res.image.super_url :
+                medium_url: res.image ?
+                  res.image.medium_url :
                   null,
               },
               aliases: res.aliases,
@@ -63,22 +68,22 @@ module.exports = function timedOutAPI(conn) {
               deck: res.deck
             };
           }).forEach(function(dataObj, i, array) {
-            if (i < 6) {
-              if (dataObj.art.super_url === null || dataObj.platforms === null) {
+            if (i < 11) {
+              if (dataObj.art.medium_url === null || dataObj.platforms === null) {
                 return;
               }
               else {
                 this.name = dataObj.name;
                 this.GBid = dataObj.GBid;
-                this.art = `${dataObj.art.super_url}`;
+                this.art = `${dataObj.art.medium_url}`;
                 this.aliases = dataObj.aliases;
                 this.platforms = dataObj.platforms.map(function(plats) {
                   return plats.name;
                 }).join(',');
                 this.description = dataObj.deck;
                 conn.query(`
-                INSERT INTO games(name,GB_id,art,aliases,platform,description)
-                VALUES(?, ?, ?, ?, ?, ?);
+                INSERT INTO games(name,GB_id,art,aliases,platform,description,popularity)
+                VALUES(?, ?, ?, ?, ?, ?, 0);
                 `, [
                   this.name,
                   this.GBid,
@@ -101,8 +106,8 @@ module.exports = function timedOutAPI(conn) {
             }
           });
           conn.query(`
-          SELECT * FROM games WHERE name LIKE ? OR description LIKE ? OR ALIASES LIKE ?
-          ORDER BY popularity DESC`, [
+          SELECT * FROM games WHERE name LIKE ? OR description LIKE ? OR ALIASES LIKE ? ORDER BY popularity
+          `, [
             `%${query}%`, `%${query}%`, `%${query}%`
           ], function(err, results) {
             if (err) {

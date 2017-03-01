@@ -14,13 +14,15 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 app.use(bodyParser.json());
+var cors = require('cors');
+app.use(cors());
 
 app.get('/main', function(request, response) {
-  timedOutAPI.listGames(function(err, result) {
+  timedOutAPI.listGames(function(err, res) {
     if (err) {
       console.log(err);
     } else {
-      response.send(JSON.stringify({result}));
+      response.send(JSON.stringify({res}));
     }
   });
 });
@@ -38,23 +40,28 @@ app.get('/main', function(request, response) {
 
 app.get('/search', function(request, response) {
   var query = request.query.q;
-  timedOutAPI.searchGames(query, function(err, result) {
+  timedOutAPI.searchGames(query, function(err, res) {
     if(err) {
       console.log(err);
     }
     else {
-      if((JSON.stringify({result}).length) < 11) {
+      console.log(res.length);
+      if(res.length < 11) {
         timedOutAPI.searchGB(query, function(err, res) {
           if(err) {
             console.log(err);
           }
           else {
+            console.log(res);
+            console.log('sending', JSON.stringify(res));
             response.send(JSON.stringify({res}));
           }
         });
       }
       else {
-      response.send(JSON.stringify({result}));
+        console.log(res);
+        console.log('instead sending', JSON.stringify(res));
+      response.send(JSON.stringify({res}));
       }
     }
   });
