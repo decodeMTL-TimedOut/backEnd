@@ -464,7 +464,7 @@ module.exports = function timedOutAPI(conn) {
         }
         else {
           if (res[0].count >= res[0].size) {
-            console.log('this is breaking it');
+
             callback("Party is full!");
           }
           else {
@@ -476,7 +476,7 @@ module.exports = function timedOutAPI(conn) {
                   callback(err);
                 }
                 else {
-                  console.log('its getting to here at least');
+
                   var party = result;
                   conn.query(`
               SELECT parties.startTime, parties.endTime
@@ -488,7 +488,7 @@ module.exports = function timedOutAPI(conn) {
                   callback(err);
                 }
                 else {
-                  console.log('and now here');
+
                     // result.every(function(result) {
                       // if (party.startTime > result.endTime || party.endTime < result.startTime) {
                         conn.query(`
@@ -500,7 +500,7 @@ module.exports = function timedOutAPI(conn) {
                             callback(err);
                           }
                           else {
-                            console.log('so far wow');
+
                             conn.query(`
                   SELECT registrations.id as regId,
                   registrations.userId, registrations.joined,
@@ -516,7 +516,7 @@ module.exports = function timedOutAPI(conn) {
                                 callback(err);
                               }
                               else {
-                                console.log('final result', result);
+
                                 callback(null, {
                                   partyId: partyId,
                                   registrations: result
@@ -550,6 +550,7 @@ module.exports = function timedOutAPI(conn) {
         `, [
         userId, partyId
       ], function(err, result) {
+        console.log(result);
         if (err) {
           callback(err);
         }

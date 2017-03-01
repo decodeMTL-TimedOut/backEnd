@@ -153,7 +153,7 @@ app.post('/games/:id/parties/:partyId/join', function(request, response) {
 app.post('/games/:id/parties/:partyId/leave', function(request, response) {
   console.log(request.body);
   timedOutAPI.leaveParty({
-    partyId: request.params.id,
+    partyId: request.params.partyId,
     userId: request.body.userId
   }, function(err, result) {
     if(err) {
