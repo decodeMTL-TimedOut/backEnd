@@ -182,7 +182,7 @@ module.exports = function timedOutAPI(conn) {
         LEFT JOIN tags
         ON parties.id = tags.partyId
         WHERE games.id = ?
-        ORDER BY startTime ASC
+        ORDER BY registrations.joined ASC
         `, [`${gameId}`], function(err, response) {
               if (err) {
                 callback(err);
@@ -220,7 +220,16 @@ module.exports = function timedOutAPI(conn) {
                       endTime: row.endTime,
                       status: row.confirm,
                       users: [],
-                      tags: []
+                      tags: {
+                        pvp: row.pvp,
+                        pve: row.pve,
+                        exp: row.exp,
+                        farm: row.farm,
+                        pro: row.pro,
+                        noob: row.noob,
+                        comp: row.comp,
+                        casual: row.casual
+                        }
                     };
                     game.parties.push(partyBook);
                   }
@@ -229,16 +238,16 @@ module.exports = function timedOutAPI(conn) {
                     userId: row.userId,
                     username: row.username
                   });
-                  partyBook.tags.push({
-                    pvp: row.pvp,
-                    pve: row.pve,
-                    exp: row.exp,
-                    farm: row.farm,
-                    pro: row.pro,
-                    noob: row.noob,
-                    comp: row.comp,
-                    casual: row.casual
-                  });
+                  // partyBook.tags.push({
+                  //   pvp: row.pvp,
+                  //   pve: row.pve,
+                  //   exp: row.exp,
+                  //   farm: row.farm,
+                  //   pro: row.pro,
+                  //   noob: row.noob,
+                  //   comp: row.comp,
+                  //   casual: row.casual
+                  // });
 
                   return games;
                 }, []);
@@ -377,7 +386,6 @@ module.exports = function timedOutAPI(conn) {
         // }
       });
     },
-
     editParty: function(edit, callback) {
       var startTime = edit.startTime;
       var endTime = edit.endTime;
@@ -450,23 +458,25 @@ module.exports = function timedOutAPI(conn) {
       FROM registrations
       LEFT JOIN parties
       ON partyId = parties.id
-      WHERE partyId=?`, [partyId], function(err, res) {
+      WHERE registrations.partyId=?`, [partyId], function(err, res) {
         if (err) {
           callback(err);
         }
         else {
           if (res[0].count >= res[0].size) {
+            console.log('this is breaking it');
             callback("Party is full!");
           }
           else {
             conn.query(`
             SELECT startTime, endTime
-            FROM parties where partyId = ?`, [partyId],
+            FROM parties where parties.id = ?`, [partyId],
               function(err, result) {
                 if (err) {
                   callback(err);
                 }
                 else {
+                  console.log('its getting to here at least');
                   var party = result;
                   conn.query(`
               SELECT parties.startTime, parties.endTime
@@ -478,6 +488,7 @@ module.exports = function timedOutAPI(conn) {
                   callback(err);
                 }
                 else {
+                  console.log('and now here');
                     // result.every(function(result) {
                       // if (party.startTime > result.endTime || party.endTime < result.startTime) {
                         conn.query(`
@@ -489,6 +500,7 @@ module.exports = function timedOutAPI(conn) {
                             callback(err);
                           }
                           else {
+                            console.log('so far wow');
                             conn.query(`
                   SELECT registrations.id as regId,
                   registrations.userId, registrations.joined,
@@ -497,12 +509,14 @@ module.exports = function timedOutAPI(conn) {
                   FROM registrations
                   LEFT JOIN users
                   ON registrations.userId = users.id
-                  WHERE partyId=?
+                  WHERE registrations.partyId=?
+                  ORDER BY registrations.joined ASC
                   `, [partyId], function(err, result) {
                               if (err) {
                                 callback(err);
                               }
                               else {
+                                console.log('final result', result);
                                 callback(null, {
                                   partyId: partyId,
                                   registrations: result

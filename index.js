@@ -70,12 +70,12 @@ app.get('/games/:id', function(request, response) {
   });
 });
 
-app.get('/games/:id/parties/:partyId', function(request, response) {
-  timedOutAPI.showParty({
-    partyId: request.params.partyId,
-    gameId: request.params.id
-  });
-});
+// app.get('/games/:id/parties/:partyId', function(request, response) {
+//   timedOutAPI.showParty({
+//     partyId: request.params.partyId,
+//     gameId: request.params.id
+//   });
+// });
 
 app.post('/games/:id/parties/create', function(request, response) {
   console.log(request.body);
@@ -106,11 +106,11 @@ app.post('/games/:id/parties/create', function(request, response) {
 
 app.post('/games/:id/parties/:partyId/edit', function(request, response) {
   timedOutAPI.editParty({
-    startTime: response.body.startTime,
-    endTime: response.body.endTime,
-    name: response.body.gameName,
+    startTime: request.body.startTime,
+    endTime: request.body.endTime,
+    name: request.body.gameName,
     gameId: request.params.id,
-    size: response.body.size,
+    size: request.body.size,
     partyId: request.params.partyId,
     tags: {
       pvp: 1,
@@ -133,7 +133,10 @@ app.post('/games/:id/parties/:partyId/edit', function(request, response) {
 });
 
 app.post('/games/:id/parties/:partyId/join', function(request, response) {
-  console.log(request.body);
+  console.log('body is', request.body);
+  console.log('partyId: ', request.params.partyId);
+  console.log('userId: ', request.body.userId);
+  console.log('username: ', request.body.username);
   timedOutAPI.joinParty({
     partyId: request.params.partyId,
     userId: request.body.userId,
